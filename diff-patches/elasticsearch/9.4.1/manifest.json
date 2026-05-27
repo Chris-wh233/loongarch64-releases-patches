@@ -1,0 +1,8 @@
+{
+  "project": "elasticsearch",
+  "version": "9.4.1",
+  "generated_at": "2026-05-27T09:43:12Z",
+  "diff_files": [
+    "source.diff"
+  ]
+}
