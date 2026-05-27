@@ -117,7 +117,8 @@
         "unixodbc-dev",
         "zip",
         "zlib1g-dev"
-      ]
+      ],
+      "skip_build": true
     },
     {
       "name": "jruby",
