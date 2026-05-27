@@ -1,0 +1,10 @@
+{
+  "project": "milvus",
+  "version": "2.6.17",
+  "generated_at": "2026-05-27T14:36:12Z",
+  "diff_files": [
+    "conan-home.diff",
+    "source.diff",
+    "conan-data.diff"
+  ]
+}

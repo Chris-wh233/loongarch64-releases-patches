@@ -3,12 +3,23 @@
   "ci_repository": "loongarch64-releases/tailwindcss",
   "upstream_repository": "tailwindlabs/tailwindcss",
   "architecture": "loongarch64",
-  "latest_generated_version": null,
+  "latest_generated_version": "v4.2.4",
+  "upstream_source_tag": "v4.2.4",
   "docker_image": "lcr.loongnix.cn/library/debian:forky",
-  "diff_directory": null,
-  "diff_files": [],
-  "description": "Captures Tailwind CSS source adaptations applied before the Rust build.",
   "dockerfile": "Dockerfile.base",
-  "upstream_source_tag": null,
-  "extra_packages": []
+  "extra_packages": [],
+  "last_generated_at": "2026-05-27T14:36:25Z",
+  "diff_directory": "diff-patches/tailwindcss/v4.2.4",
+  "diff_files": [
+    "source.diff"
+  ],
+  "description": "Captures Tailwind CSS source adaptations applied before the Rust build.",
+  "generated_manifest": {
+    "project": "tailwindcss",
+    "version": "v4.2.4",
+    "generated_at": "2026-05-27T14:36:25Z",
+    "diff_files": [
+      "source.diff"
+    ]
+  }
 }
