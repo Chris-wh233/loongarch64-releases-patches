@@ -37,6 +37,12 @@ compilation.
 By default CI repositories are cloned under `_work/ci-repos` and temporary build
 state is kept under `_work/runs`.
 
+The version directory follows the latest release tag from
+`loongarch64-releases/<project>`. When the upstream CI workflow contains
+`LATEST_VERSION=${LATEST_VERSION#v}`, the generator keeps that CI release
+version for the patched CI script but uses `v<version>` as the real upstream
+source tag.
+
 ## GitHub repository setup
 
 1. Enable GitHub Actions for the repository.

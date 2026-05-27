@@ -1,14 +1,13 @@
 {
-    "project":  "next.js",
-    "ci_repository":  "loongarch64-releases/next.js",
-    "upstream_repository":  "vercel/next.js",
-    "architecture":  "loongarch64",
-    "latest_generated_version":  null,
-    "docker_image":  "lcr.loongnix.cn/library/debian:forky",
-    "diff_directory":  null,
-    "diff_files":  [
-
-                   ],
-    "description":  "Captures Next.js source adaptations and the Cargo registry cty LoongArch64 target addition.",
-    "dockerfile":  "Dockerfile.diff"
+  "project": "next.js",
+  "ci_repository": "loongarch64-releases/next.js",
+  "upstream_repository": "vercel/next.js",
+  "architecture": "loongarch64",
+  "latest_generated_version": null,
+  "docker_image": "lcr.loongnix.cn/library/debian:forky",
+  "diff_directory": null,
+  "diff_files": [],
+  "description": "Captures Next.js source adaptations and the Cargo registry cty LoongArch64 target addition.",
+  "dockerfile": "Dockerfile.diff",
+  "upstream_source_tag": null
 }

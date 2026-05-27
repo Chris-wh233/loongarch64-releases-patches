@@ -77,9 +77,40 @@ def patch_milvus_helpers(repo_root: Path) -> None:
     dep_patch.write_text("".join(dep_lines), encoding="utf-8")
 
 
-def patch_build(repo_root: Path, main_root: Path, project: dict, version: str, output_dir: str) -> None:
+def patch_source_tag_usage(lines: list[str]) -> list[str]:
+    patched = []
+    for line in lines:
+        line = line.replace('-b "${VERSION}"', '-b "${SOURCE_TAG}"')
+        line = line.replace("-b ${VERSION}", "-b ${SOURCE_TAG}")
+        line = line.replace("/archive/refs/tags/v${VERSION}.tar.gz", "/archive/refs/tags/${SOURCE_TAG}.tar.gz")
+        line = line.replace("/archive/refs/tags/${VERSION}.tar.gz", "/archive/refs/tags/${SOURCE_TAG}.tar.gz")
+        line = line.replace("/archive/refs/tags/v$VERSION.tar.gz", "/archive/refs/tags/${SOURCE_TAG}.tar.gz")
+        line = line.replace("/archive/refs/tags/$VERSION.tar.gz", "/archive/refs/tags/${SOURCE_TAG}.tar.gz")
+        patched.append(line)
+    return patched
+
+
+def add_source_tag_default(lines: list[str], source_tag: str) -> list[str]:
+    if any("SOURCE_TAG=" in line for line in lines[:30]):
+        return lines
+
+    insertion = [f'SOURCE_TAG="${{SOURCE_TAG:-{source_tag}}}"\n']
+    for idx, line in enumerate(lines):
+        if line.startswith("VERSION="):
+            return lines[: idx + 1] + insertion + lines[idx + 1 :]
+
+    for idx, line in enumerate(lines[:10]):
+        if line.startswith("set "):
+            return lines[: idx + 1] + insertion + lines[idx + 1 :]
+
+    return lines[:1] + insertion + lines[1:]
+
+
+def patch_build(repo_root: Path, main_root: Path, project: dict, version: str, source_tag: str, output_dir: str) -> None:
     build_sh = repo_root / "scripts" / "build.sh"
     lines = build_sh.read_text(encoding="utf-8").splitlines(keepends=True)
+    lines = patch_source_tag_usage(lines)
+    lines = add_source_tag_default(lines, source_tag)
 
     source_expr = project.get("source_dir_template", "${SRCS}/${VERSION}")
     baseline_anchor = project.get("baseline_anchor") or project["patch_anchor"]
@@ -112,15 +143,16 @@ def patch_build(repo_root: Path, main_root: Path, project: dict, version: str, o
 
 
 def main() -> int:
-    if len(sys.argv) != 6:
-        print("usage: prepare_diff_run.py <main-root> <ci-root> <project> <version> <output-dir>", file=sys.stderr)
+    if len(sys.argv) != 7:
+        print("usage: prepare_diff_run.py <main-root> <ci-root> <project> <version> <source-tag> <output-dir>", file=sys.stderr)
         return 2
 
     main_root = Path(sys.argv[1]).resolve()
     repo_root = Path(sys.argv[2]).resolve()
     project_name = sys.argv[3]
     version = sys.argv[4]
-    output_dir = sys.argv[5]
+    source_tag = sys.argv[5]
+    output_dir = sys.argv[6]
 
     project = load_project(main_root / "projects.json", project_name)
     copy_helper_scripts(repo_root, main_root)
@@ -130,7 +162,7 @@ def main() -> int:
     if project_name == "next.js":
         project["special"] = "next_cargo"
 
-    patch_build(repo_root, main_root, project, version, output_dir)
+    patch_build(repo_root, main_root, project, version, source_tag, output_dir)
     return 0
 
 

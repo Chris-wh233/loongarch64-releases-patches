@@ -1,14 +1,13 @@
 {
-    "project":  "ml-cpp",
-    "ci_repository":  "loongarch64-releases/ml-cpp",
-    "upstream_repository":  "elastic/ml-cpp",
-    "architecture":  "loongarch64",
-    "latest_generated_version":  null,
-    "docker_image":  "lcr.loongnix.cn/library/debian:forky",
-    "diff_directory":  null,
-    "diff_files":  [
-
-                   ],
-    "description":  "Captures Elastic ml-cpp source adaptations applied by patches/patch.sh.",
-    "dockerfile":  "Dockerfile.diff"
+  "project": "ml-cpp",
+  "ci_repository": "loongarch64-releases/ml-cpp",
+  "upstream_repository": "elastic/ml-cpp",
+  "architecture": "loongarch64",
+  "latest_generated_version": null,
+  "docker_image": "lcr.loongnix.cn/library/debian:forky",
+  "diff_directory": null,
+  "diff_files": [],
+  "description": "Captures Elastic ml-cpp source adaptations applied by patches/patch.sh.",
+  "dockerfile": "Dockerfile.diff",
+  "upstream_source_tag": null
 }

@@ -16,17 +16,7 @@ PY
 
 for project in $projects; do
   tag="$(gh api "repos/loongarch64-releases/${project}/releases/latest" --jq '.tag_name')"
-  version_arg="$(python3 - <<'PY' "$main_root/projects.json" "$project"
-import json, sys
-data = json.load(open(sys.argv[1], encoding="utf-8"))
-project = next(p for p in data["projects"] if p["name"] == sys.argv[2])
-print(project.get("version_arg", "as_tag"))
-PY
-)"
   version="$tag"
-  if [ "$version_arg" = "strip_v" ]; then
-    version="${version#v}"
-  fi
 
   if [ -f "${main_root}/diff-patches/${project}/${version}/manifest.json" ]; then
     echo "${project} ${version} already generated; skipping."
@@ -36,4 +26,3 @@ PY
   echo "Generating diffs for ${project} ${version}"
   "${main_root}/scripts/generate_project_diff.sh" "$project" "$version"
 done
-

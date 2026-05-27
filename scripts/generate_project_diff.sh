@@ -56,7 +56,18 @@ rm -rf "$output_dir"
 mkdir -p "$output_dir"
 container_output_dir="/src/diff-output"
 
-python3 "${main_root}/scripts/prepare_diff_run.py" "$main_root" "$run_dir" "$project" "$version" "$container_output_dir"
+source_tag="$version"
+if grep -R -F 'LATEST_VERSION=${LATEST_VERSION#v}' "${run_dir}/.github/workflows" >/dev/null 2>&1; then
+  case "$source_tag" in
+    v*) ;;
+    *) source_tag="v${source_tag}" ;;
+  esac
+fi
+
+echo "CI release version: ${version}"
+echo "Upstream source tag: ${source_tag}"
+
+python3 "${main_root}/scripts/prepare_diff_run.py" "$main_root" "$run_dir" "$project" "$version" "$source_tag" "$container_output_dir"
 
 image_name="${DIFF_DOCKER_IMAGE:-loongarch64-patch-diff-env}"
 docker build -t "$image_name" -f "${main_root}/Dockerfile.diff" "${main_root}"
@@ -93,6 +104,7 @@ docker run --rm \
   -v "${run_dir}:/src:z" \
   -w /src \
   -e VERSION="${version}" \
+  -e SOURCE_TAG="${source_tag}" \
   -e HOST_UID="$(id -u)" \
   -e HOST_GID="$(id -g)" \
   "$image_name" \
@@ -102,4 +114,4 @@ if [ -d "${run_dir}/diff-output" ]; then
   cp -a "${run_dir}/diff-output/." "$output_dir/"
 fi
 
-python3 "${main_root}/scripts/update_metadata.py" "$main_root" "$run_dir" "$project" "$version" "$output_dir"
+python3 "${main_root}/scripts/update_metadata.py" "$main_root" "$run_dir" "$project" "$version" "$source_tag" "$output_dir"

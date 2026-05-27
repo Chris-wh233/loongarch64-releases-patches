@@ -1,14 +1,13 @@
 {
-    "project":  "coredns",
-    "ci_repository":  "loongarch64-releases/coredns",
-    "upstream_repository":  "coredns/coredns",
-    "architecture":  "loongarch64",
-    "latest_generated_version":  null,
-    "docker_image":  "lcr.loongnix.cn/library/debian:forky",
-    "diff_directory":  null,
-    "diff_files":  [
-
-                   ],
-    "description":  "Captures CoreDNS module dependency changes performed by patches/patch.sh.",
-    "dockerfile":  "Dockerfile.diff"
+  "project": "coredns",
+  "ci_repository": "loongarch64-releases/coredns",
+  "upstream_repository": "coredns/coredns",
+  "architecture": "loongarch64",
+  "latest_generated_version": null,
+  "docker_image": "lcr.loongnix.cn/library/debian:forky",
+  "diff_directory": null,
+  "diff_files": [],
+  "description": "Captures CoreDNS module dependency changes performed by patches/patch.sh.",
+  "dockerfile": "Dockerfile.diff",
+  "upstream_source_tag": null
 }

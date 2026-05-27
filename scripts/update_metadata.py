@@ -16,15 +16,16 @@ def first_from(dockerfile: Path) -> str | None:
 
 
 def main() -> int:
-    if len(sys.argv) != 6:
-        print("usage: update_metadata.py <main-root> <ci-root> <project> <version> <diff-dir>", file=sys.stderr)
+    if len(sys.argv) != 7:
+        print("usage: update_metadata.py <main-root> <ci-root> <project> <version> <source-tag> <diff-dir>", file=sys.stderr)
         return 2
 
     main_root = Path(sys.argv[1]).resolve()
     ci_root = Path(sys.argv[2]).resolve()
     project_name = sys.argv[3]
     version = sys.argv[4]
-    diff_dir = Path(sys.argv[5]).resolve()
+    source_tag = sys.argv[5]
+    diff_dir = Path(sys.argv[6]).resolve()
 
     data = json.loads((main_root / "projects.json").read_text(encoding="utf-8"))
     project = next(p for p in data["projects"] if p["name"] == project_name)
@@ -48,6 +49,7 @@ def main() -> int:
         "upstream_repository": project["upstream"],
         "architecture": data["architecture"],
         "latest_generated_version": version,
+        "upstream_source_tag": source_tag,
         "docker_image": docker_image,
         "dockerfile": "Dockerfile.diff",
         "last_generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
