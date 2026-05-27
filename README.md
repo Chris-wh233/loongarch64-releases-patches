@@ -1,4 +1,4 @@
-# loongarch64-releases patches
+# loongarch64-releases-patches
 
 This repository generates reviewable diff files from the shell-based adaptation
 patches used by `loongarch64-releases/*` CI repositories.
