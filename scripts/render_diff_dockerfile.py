@@ -21,7 +21,9 @@ def main() -> int:
 
     config = json.loads((main_root / "projects.json").read_text(encoding="utf-8"))
     projects = [p for p in config["projects"] if p.get("patched")]
-    if selector != "__all__":
+    if selector == "__all__":
+        projects = [p for p in projects if not p.get("skip_build", False)]
+    else:
         projects = [p for p in projects if p["name"] == selector]
         if not projects:
             raise SystemExit(f"unknown patched project: {selector}")

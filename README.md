@@ -19,6 +19,10 @@ Project-specific package needs are maintained in `projects.json` as
 `extra_packages`. Plain entries are installed with `apt-get`; entries prefixed
 with `pip:` are installed with `python3 -m pip`.
 
+Full scheduled runs include projects where `patched` is `true` unless the
+project also sets `skip_build` to `true`. Manual single-project runs ignore
+`skip_build`, but still require `patched: true`.
+
 ## Layout
 
 - `projects.json` records the CI repository, real upstream, architecture, Docker

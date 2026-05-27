@@ -13,7 +13,12 @@ import json, sys
 data = json.load(open(sys.argv[1], encoding="utf-8"))
 only = sys.argv[2]
 for item in data["projects"]:
-    if item.get("patched") and (not only or item["name"] == only):
+    if not item.get("patched"):
+        continue
+    if only:
+        if item["name"] == only:
+            print(item["name"])
+    elif not item.get("skip_build", False):
         print(item["name"])
 PY
 )"
