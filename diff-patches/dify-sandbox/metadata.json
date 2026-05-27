@@ -3,12 +3,19 @@
   "ci_repository": "loongarch64-releases/dify-sandbox",
   "upstream_repository": "langgenius/dify-sandbox",
   "architecture": "loongarch64",
-  "latest_generated_version": null,
+  "latest_generated_version": "0.2.15",
+  "upstream_source_tag": "0.2.15",
   "docker_image": "lcr.loongnix.cn/library/debian:forky",
-  "diff_directory": null,
+  "dockerfile": "Dockerfile.base",
+  "extra_packages": [],
+  "last_generated_at": "2026-05-27T09:27:55Z",
+  "diff_directory": "diff-patches/dify-sandbox/0.2.15",
   "diff_files": [],
   "description": "Captures added LoongArch64 syscall/static files and the generated LoongArch64 build script.",
-  "dockerfile": "Dockerfile.base",
-  "upstream_source_tag": null,
-  "extra_packages": []
+  "generated_manifest": {
+    "project": "dify-sandbox",
+    "version": "0.2.15",
+    "generated_at": "2026-05-27T09:27:55Z",
+    "diff_files": []
+  }
 }
