@@ -54,11 +54,52 @@ cp -a "${cache_dir}/." "$run_dir/"
 output_dir="${main_root}/diff-patches/${project}/${version}"
 rm -rf "$output_dir"
 mkdir -p "$output_dir"
+container_output_dir="/src/diff-output"
 
-python3 "${main_root}/scripts/prepare_diff_run.py" "$main_root" "$run_dir" "$project" "$version" "$output_dir"
+python3 "${main_root}/scripts/prepare_diff_run.py" "$main_root" "$run_dir" "$project" "$version" "$container_output_dir"
 
-chmod +x "${run_dir}/scripts/build_in_docker.sh"
-"${run_dir}/scripts/build_in_docker.sh" "$version"
+image_name="${DIFF_DOCKER_IMAGE:-loongarch64-patch-diff-env}"
+docker build -t "$image_name" -f "${main_root}/Dockerfile.diff" "${main_root}"
+
+mapfile -t extra_args < <(python3 - <<'PY' "$project_json" "$version"
+import json
+import sys
+
+project = json.loads(sys.argv[1])
+version = sys.argv[2]
+
+if project.get("extra_args_strategy") == "emqx_el_version":
+    clear = version.lstrip("ve")
+    parts = clear.split(".")
+    major = int(parts[0])
+    minor = int(parts[1]) if len(parts) > 1 else 0
+    ver_num = major * 1000 + minor
+    if ver_num >= 5009:
+        print("27")
+    elif ver_num >= 5004:
+        print("26")
+    elif ver_num >= 5000:
+        print("25")
+    else:
+        print("24")
+else:
+    for arg in project.get("extra_args", []):
+        print(arg)
+PY
+)
+
+docker run --rm \
+  --platform linux/loong64 \
+  -v "${run_dir}:/src:z" \
+  -w /src \
+  -e VERSION="${version}" \
+  -e HOST_UID="$(id -u)" \
+  -e HOST_GID="$(id -g)" \
+  "$image_name" \
+  /bin/bash -lc './scripts/build.sh "$@"' _ "$version" "${extra_args[@]}"
+
+if [ -d "${run_dir}/diff-output" ]; then
+  cp -a "${run_dir}/diff-output/." "$output_dir/"
+fi
 
 python3 "${main_root}/scripts/update_metadata.py" "$main_root" "$run_dir" "$project" "$version" "$output_dir"
-

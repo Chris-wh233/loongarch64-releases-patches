@@ -1,11 +1,14 @@
 {
-  "project": "milvus",
-  "ci_repository": "loongarch64-releases/milvus",
-  "upstream_repository": "milvus-io/milvus",
-  "architecture": "loongarch64",
-  "latest_generated_version": null,
-  "docker_image": "lcr.loongnix.cn/openeuler/openeuler:24.03-LTS-SP3",
-  "diff_directory": null,
-  "diff_files": [],
-  "description": "Captures Milvus source adaptations, Conan configuration changes, and downloaded Conan recipe adaptations as separate diffs."
+    "project":  "milvus",
+    "ci_repository":  "loongarch64-releases/milvus",
+    "upstream_repository":  "milvus-io/milvus",
+    "architecture":  "loongarch64",
+    "latest_generated_version":  null,
+    "docker_image":  "lcr.loongnix.cn/library/debian:forky",
+    "diff_directory":  null,
+    "diff_files":  [
+
+                   ],
+    "description":  "Captures Milvus source adaptations, Conan configuration changes, and downloaded Conan recipe adaptations as separate diffs.",
+    "dockerfile":  "Dockerfile.diff"
 }

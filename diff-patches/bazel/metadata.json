@@ -1,11 +1,14 @@
 {
-  "project": "bazel",
-  "ci_repository": "loongarch64-releases/bazel",
-  "upstream_repository": "bazelbuild/bazel",
-  "architecture": "loongarch64",
-  "latest_generated_version": null,
-  "docker_image": "lcr.loongnix.cn/library/debian:forky-slim",
-  "diff_directory": null,
-  "diff_files": [],
-  "description": "Captures Bazel source adaptations applied by patches/patch.sh before the Bazel build starts."
+    "project":  "bazel",
+    "ci_repository":  "loongarch64-releases/bazel",
+    "upstream_repository":  "bazelbuild/bazel",
+    "architecture":  "loongarch64",
+    "latest_generated_version":  null,
+    "docker_image":  "lcr.loongnix.cn/library/debian:forky",
+    "diff_directory":  null,
+    "diff_files":  [
+
+                   ],
+    "description":  "Captures Bazel source adaptations applied by patches/patch.sh before the Bazel build starts.",
+    "dockerfile":  "Dockerfile.diff"
 }

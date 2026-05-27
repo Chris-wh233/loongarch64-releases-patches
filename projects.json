@@ -83,7 +83,7 @@
       "patched": true,
       "docker_image": "lcr.loongnix.cn/library/erlang:${EL_VERSION}-slim",
       "version_arg": "as_tag",
-      "extra_args": ["26"],
+      "extra_args_strategy": "emqx_el_version",
       "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\" \"${VERSION}\"",
       "diff_notes": "Runs EMQX dependency retrieval first, then captures dependency and source adaptations before compilation."
     },
