@@ -158,7 +158,8 @@
       "diff_notes": "Captures Logstash source adaptations in the extracted upstream source directory.",
       "extra_packages": [
         "default-jdk"
-      ]
+      ],
+      "skip_build": true
     },
     {
       "name": "mariadb",
