@@ -4,6 +4,10 @@ set -euo pipefail
 main_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 only_project="${1:-}"
 
+if [ -z "$only_project" ]; then
+  export DIFF_PACKAGE_SELECTOR="__all__"
+fi
+
 projects="$(python3 - "$main_root/projects.json" "$only_project" <<'PY'
 import json, sys
 data = json.load(open(sys.argv[1], encoding="utf-8"))

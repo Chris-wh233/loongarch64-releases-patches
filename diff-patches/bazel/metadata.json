@@ -8,6 +8,9 @@
   "diff_directory": null,
   "diff_files": [],
   "description": "Captures Bazel source adaptations applied by patches/patch.sh before the Bazel build starts.",
-  "dockerfile": "Dockerfile.diff",
-  "upstream_source_tag": null
+  "dockerfile": "Dockerfile.base",
+  "upstream_source_tag": null,
+  "extra_packages": [
+    "unzip"
+  ]
 }

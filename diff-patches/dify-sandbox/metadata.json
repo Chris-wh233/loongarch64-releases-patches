@@ -8,6 +8,7 @@
   "diff_directory": null,
   "diff_files": [],
   "description": "Captures added LoongArch64 syscall/static files and the generated LoongArch64 build script.",
-  "dockerfile": "Dockerfile.diff",
-  "upstream_source_tag": null
+  "dockerfile": "Dockerfile.base",
+  "upstream_source_tag": null,
+  "extra_packages": []
 }

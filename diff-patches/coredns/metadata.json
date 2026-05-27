@@ -8,6 +8,9 @@
   "diff_directory": null,
   "diff_files": [],
   "description": "Captures CoreDNS module dependency changes performed by patches/patch.sh.",
-  "dockerfile": "Dockerfile.diff",
-  "upstream_source_tag": null
+  "dockerfile": "Dockerfile.base",
+  "upstream_source_tag": null,
+  "extra_packages": [
+    "golang"
+  ]
 }

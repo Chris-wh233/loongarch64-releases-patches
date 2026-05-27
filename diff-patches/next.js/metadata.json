@@ -8,6 +8,14 @@
   "diff_directory": null,
   "diff_files": [],
   "description": "Captures Next.js source adaptations and the Cargo registry cty LoongArch64 target addition.",
-  "dockerfile": "Dockerfile.diff",
-  "upstream_source_tag": null
+  "dockerfile": "Dockerfile.base",
+  "upstream_source_tag": null,
+  "extra_packages": [
+    "cargo",
+    "gcc",
+    "g++",
+    "make",
+    "pkg-config",
+    "rustc"
+  ]
 }

@@ -8,12 +8,16 @@ The original CI repositories keep LoongArch64 adaptations as shell scripts under
 after the last adaptation action, and export the resulting source changes as
 diff files under `diff-patches/<project>/<version>/`.
 
-Diff generation uses the shared `Dockerfile.diff` image instead of each
-upstream CI repository's full `Dockerfile.build`. The image contains the tools
-needed to fetch source archives, run patch scripts, create Git baselines, and
-handle the few patch flows that need Go, Rust/Cargo, Java, Erlang or Conan. The
-patched CI build script exits immediately after diff capture, before binary
-compilation.
+Diff generation uses `Dockerfile.base` plus per-project extra packages declared
+in `projects.json` instead of each upstream CI repository's full
+`Dockerfile.build`. The base image only provides `git` and `wget`; the generator
+renders a temporary Dockerfile with the package union needed for the selected
+projects. The patched CI build script exits immediately after diff capture,
+before binary compilation.
+
+Project-specific package needs are maintained in `projects.json` as
+`extra_packages`. Plain entries are installed with `apt-get`; entries prefixed
+with `pip:` are installed with `python3 -m pip`.
 
 ## Layout
 
@@ -23,7 +27,7 @@ compilation.
 - `diff-patches/<project>/metadata.json` describes generated diffs and is
   updated by each generation run.
 - `scripts/` contains the shared implementation used locally and by CI.
-- `Dockerfile.diff` defines the shared LoongArch64 diff-generation container.
+- `Dockerfile.base` defines the minimal LoongArch64 diff-generation base image.
 - `.dockerignore` keeps local CI repository clones out of the Docker build
   context.
 - `.github/workflows/generate-diffs.yml` runs on schedule or manually.

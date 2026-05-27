@@ -9,7 +9,10 @@
       "patched": true,
       "docker_image": "lcr.loongnix.cn/library/debian:forky-slim",
       "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\" \"${VERSION}\"",
-      "diff_notes": "Captures Bazel source adaptations applied by patches/patch.sh before the Bazel build starts."
+      "diff_notes": "Captures Bazel source adaptations applied by patches/patch.sh before the Bazel build starts.",
+      "extra_packages": [
+        "unzip"
+      ]
     },
     {
       "name": "buildx",
@@ -18,7 +21,8 @@
       "patched": true,
       "docker_image": "lcr.loongnix.cn/library/golang:${GO_VERSION}",
       "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\"",
-      "diff_notes": "Captures Docker Buildx source adaptations applied at the beginning of build()."
+      "diff_notes": "Captures Docker Buildx source adaptations applied at the beginning of build().",
+      "extra_packages": []
     },
     {
       "name": "compose",
@@ -41,7 +45,10 @@
       "patched": true,
       "docker_image": "lcr.loongnix.cn/library/golang:1.25",
       "patch_anchor": "\"${PATCHES}/patch.sh\" ${VERSION}",
-      "diff_notes": "Captures CoreDNS module dependency changes performed by patches/patch.sh."
+      "diff_notes": "Captures CoreDNS module dependency changes performed by patches/patch.sh.",
+      "extra_packages": [
+        "golang"
+      ]
     },
     {
       "name": "dapr",
@@ -57,7 +64,8 @@
       "patched": true,
       "docker_image": "lcr.loongnix.cn/library/golang:1.25",
       "patch_anchor": "chmod +x \"${SRCS}/${VERSION}/build/build_loong64.sh\"",
-      "diff_notes": "Captures added LoongArch64 syscall/static files and the generated LoongArch64 build script."
+      "diff_notes": "Captures added LoongArch64 syscall/static files and the generated LoongArch64 build script.",
+      "extra_packages": []
     },
     {
       "name": "elasticsearch",
@@ -66,7 +74,10 @@
       "patched": true,
       "docker_image": "lcr.loongnix.cn/library/debian:forky",
       "patch_anchor": "\"$PATCHES/patch.sh\" \"${SRC_DIR}\" \"${VERSION}\" \"${PATCHES}\"",
-      "diff_notes": "Captures Elasticsearch source and helper-file adaptations applied by patches/patch.sh."
+      "diff_notes": "Captures Elasticsearch source and helper-file adaptations applied by patches/patch.sh.",
+      "extra_packages": [
+        "perl"
+      ]
     },
     {
       "name": "emqx",
@@ -76,7 +87,37 @@
       "docker_image": "lcr.loongnix.cn/library/erlang:${EL_VERSION}-slim",
       "extra_args_strategy": "emqx_el_version",
       "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\" \"${VERSION}\"",
-      "diff_notes": "Runs EMQX dependency retrieval first, then captures dependency and source adaptations before compilation."
+      "diff_notes": "Runs EMQX dependency retrieval first, then captures dependency and source adaptations before compilation.",
+      "extra_packages": [
+        "autoconf",
+        "automake",
+        "bison",
+        "build-essential",
+        "cargo",
+        "cmake",
+        "curl",
+        "debhelper",
+        "elixir",
+        "erlang",
+        "flex",
+        "gcc",
+        "g++",
+        "libffi-dev",
+        "libkrb5-dev",
+        "libncurses5-dev",
+        "libsasl2-dev",
+        "libssl-dev",
+        "libtool",
+        "make",
+        "perl",
+        "procps",
+        "protobuf-compiler",
+        "python3",
+        "unzip",
+        "unixodbc-dev",
+        "zip",
+        "zlib1g-dev"
+      ]
     },
     {
       "name": "jruby",
@@ -114,7 +155,10 @@
       "docker_image": "lcr.loongnix.cn/openeuler/openeuler:24.03-LTS-SP2",
       "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${UPSTREAM_REPO}-${VERSION}\" \"${VERSION}\"",
       "source_dir_template": "${SRCS}/${UPSTREAM_REPO}-${VERSION}",
-      "diff_notes": "Captures Logstash source adaptations in the extracted upstream source directory."
+      "diff_notes": "Captures Logstash source adaptations in the extracted upstream source directory.",
+      "extra_packages": [
+        "default-jdk"
+      ]
     },
     {
       "name": "mariadb",
@@ -131,7 +175,14 @@
       "docker_image": "lcr.loongnix.cn/openeuler/openeuler:24.03-LTS-SP3",
       "patch_anchor": "\"${PATCHES}/dep_patch.sh\" \"${SRC_DIR}\" \"${PATCHES}\"",
       "special": "milvus_conan",
-      "diff_notes": "Captures Milvus source adaptations, Conan configuration changes, and downloaded Conan recipe adaptations as separate diffs."
+      "diff_notes": "Captures Milvus source adaptations, Conan configuration changes, and downloaded Conan recipe adaptations as separate diffs.",
+      "extra_packages": [
+        "cmake",
+        "python3",
+        "python3-pip",
+        "python3-venv",
+        "pip:conan<2"
+      ]
     },
     {
       "name": "ml-cpp",
@@ -140,7 +191,8 @@
       "patched": true,
       "docker_image": "lcr.loongnix.cn/library/debian:forky-slim",
       "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\"",
-      "diff_notes": "Captures Elastic ml-cpp source adaptations applied by patches/patch.sh."
+      "diff_notes": "Captures Elastic ml-cpp source adaptations applied by patches/patch.sh.",
+      "extra_packages": []
     },
     {
       "name": "neo4j",
@@ -149,7 +201,8 @@
       "patched": true,
       "docker_image": "lcr.loongnix.cn/library/openjdk:17-slim",
       "patch_anchor": "\"$PATCHES/patch.sh\" \"${SRC_DIR}\"",
-      "diff_notes": "Captures Neo4j source adaptations applied before Maven packaging."
+      "diff_notes": "Captures Neo4j source adaptations applied before Maven packaging.",
+      "extra_packages": []
     },
     {
       "name": "next.js",
@@ -159,7 +212,15 @@
       "docker_image": "lcr.loongnix.cn/library/alpine:3.23.0",
       "baseline_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\"",
       "patch_anchor": "target_arch = \"loongarch64\",' \"${cty}\"",
-      "diff_notes": "Captures Next.js source adaptations and the Cargo registry cty LoongArch64 target addition."
+      "diff_notes": "Captures Next.js source adaptations and the Cargo registry cty LoongArch64 target addition.",
+      "extra_packages": [
+        "cargo",
+        "gcc",
+        "g++",
+        "make",
+        "pkg-config",
+        "rustc"
+      ]
     },
     {
       "name": "podman-compose",
@@ -175,7 +236,8 @@
       "patched": true,
       "docker_image": "lcr.loongnix.cn/library/rust:1.95.0-alpine3.22",
       "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\"",
-      "diff_notes": "Captures Tailwind CSS source adaptations applied before the Rust build."
+      "diff_notes": "Captures Tailwind CSS source adaptations applied before the Rust build.",
+      "extra_packages": []
     }
   ]
 }

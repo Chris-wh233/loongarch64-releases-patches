@@ -69,8 +69,13 @@ echo "Upstream source tag: ${source_tag}"
 
 python3 "${main_root}/scripts/prepare_diff_run.py" "$main_root" "$run_dir" "$project" "$version" "$source_tag" "$container_output_dir"
 
-image_name="${DIFF_DOCKER_IMAGE:-loongarch64-patch-diff-env}"
-docker build -t "$image_name" -f "${main_root}/Dockerfile.diff" "${main_root}"
+dockerfile_dir="${main_root}/_work/dockerfiles"
+dockerfile_selector="${DIFF_PACKAGE_SELECTOR:-$project}"
+generated_dockerfile="${dockerfile_dir}/Dockerfile.${dockerfile_selector}"
+image_name_file="${dockerfile_dir}/image.${dockerfile_selector}.txt"
+python3 "${main_root}/scripts/render_diff_dockerfile.py" "$main_root" "$dockerfile_selector" "$generated_dockerfile" "$image_name_file"
+image_name="$(cat "$image_name_file")"
+docker build -t "$image_name" -f "$generated_dockerfile" "${main_root}"
 
 mapfile -t extra_args < <(python3 - <<'PY' "$project_json" "$version"
 import json

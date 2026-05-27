@@ -8,6 +8,7 @@
   "diff_directory": null,
   "diff_files": [],
   "description": "Captures Docker Buildx source adaptations applied at the beginning of build().",
-  "dockerfile": "Dockerfile.diff",
-  "upstream_source_tag": null
+  "dockerfile": "Dockerfile.base",
+  "upstream_source_tag": null,
+  "extra_packages": []
 }

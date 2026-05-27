@@ -40,7 +40,7 @@ def main() -> int:
     if manifest_path.exists():
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
-    docker_image = first_from(main_root / "Dockerfile.diff") or project.get("docker_image")
+    docker_image = first_from(main_root / "Dockerfile.base") or project.get("docker_image")
     diff_files = sorted(p.name for p in diff_dir.glob("*.diff"))
 
     output = {
@@ -51,7 +51,8 @@ def main() -> int:
         "latest_generated_version": version,
         "upstream_source_tag": source_tag,
         "docker_image": docker_image,
-        "dockerfile": "Dockerfile.diff",
+        "dockerfile": "Dockerfile.base",
+        "extra_packages": project.get("extra_packages", []),
         "last_generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "diff_directory": f"diff-patches/{project_name}/{version}",
         "diff_files": diff_files,

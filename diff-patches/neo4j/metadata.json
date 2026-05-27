@@ -8,6 +8,7 @@
   "diff_directory": null,
   "diff_files": [],
   "description": "Captures Neo4j source adaptations applied before Maven packaging.",
-  "dockerfile": "Dockerfile.diff",
-  "upstream_source_tag": null
+  "dockerfile": "Dockerfile.base",
+  "upstream_source_tag": null,
+  "extra_packages": []
 }
