@@ -222,7 +222,8 @@
         "make",
         "pkg-config",
         "rustc"
-      ]
+      ],
+      "skip_build": true
     },
     {
       "name": "podman-compose",
