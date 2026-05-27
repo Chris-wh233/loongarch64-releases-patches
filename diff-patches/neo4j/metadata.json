@@ -1,0 +1,11 @@
+{
+  "project": "neo4j",
+  "ci_repository": "loongarch64-releases/neo4j",
+  "upstream_repository": "neo4j/neo4j",
+  "architecture": "loongarch64",
+  "latest_generated_version": null,
+  "docker_image": "lcr.loongnix.cn/library/openjdk:17-slim",
+  "diff_directory": null,
+  "diff_files": [],
+  "description": "Captures Neo4j source adaptations applied before Maven packaging."
+}

@@ -1,0 +1,11 @@
+{
+  "project": "logstash",
+  "ci_repository": "loongarch64-releases/logstash",
+  "upstream_repository": "elastic/logstash",
+  "architecture": "loongarch64",
+  "latest_generated_version": null,
+  "docker_image": "lcr.loongnix.cn/openeuler/openeuler:24.03-LTS-SP2",
+  "diff_directory": null,
+  "diff_files": [],
+  "description": "Captures Logstash source adaptations in the extracted upstream source directory."
+}

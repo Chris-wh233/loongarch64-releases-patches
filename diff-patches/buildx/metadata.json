@@ -1,0 +1,11 @@
+{
+  "project": "buildx",
+  "ci_repository": "loongarch64-releases/buildx",
+  "upstream_repository": "docker/buildx",
+  "architecture": "loongarch64",
+  "latest_generated_version": null,
+  "docker_image": "lcr.loongnix.cn/library/golang:${GO_VERSION}",
+  "diff_directory": null,
+  "diff_files": [],
+  "description": "Captures Docker Buildx source adaptations applied at the beginning of build()."
+}

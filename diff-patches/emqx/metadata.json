@@ -1,0 +1,11 @@
+{
+  "project": "emqx",
+  "ci_repository": "loongarch64-releases/emqx",
+  "upstream_repository": "emqx/emqx",
+  "architecture": "loongarch64",
+  "latest_generated_version": null,
+  "docker_image": "lcr.loongnix.cn/library/erlang:${EL_VERSION}-slim",
+  "diff_directory": null,
+  "diff_files": [],
+  "description": "Runs EMQX dependency retrieval first, then captures dependency and source adaptations before compilation."
+}

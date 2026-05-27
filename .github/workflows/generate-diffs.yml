@@ -1,0 +1,46 @@
+name: Generate LoongArch64 Patch Diffs
+
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: "Optional single project name, for example milvus"
+        required: false
+        type: string
+  schedule:
+    - cron: "17 2 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  generate-diffs:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: loong64
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Generate diffs
+        run: |
+          chmod +x scripts/*.sh diff-patches/*/gen_diff.sh
+          ./scripts/generate_all_diffs.sh "${{ github.event.inputs.project || '' }}"
+
+      - name: Commit generated diffs
+        run: |
+          if git diff --quiet -- diff-patches; then
+            echo "No diff-patch changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add diff-patches
+          git commit -m "Update generated LoongArch64 patch diffs"
+          git push
