@@ -8,6 +8,11 @@ The original CI repositories keep LoongArch64 adaptations as shell scripts under
 after the last adaptation action, and export the resulting source changes as
 diff files under `diff-patches/<project>/<version>/`.
 
+During diff generation the temporary CI copy of `Dockerfile.build` is patched to
+install `git` when the upstream build image does not already provide it. This is
+required because baseline commits and diff capture run inside the LoongArch64
+container.
+
 ## Layout
 
 - `projects.json` records the CI repository, real upstream, architecture, Docker

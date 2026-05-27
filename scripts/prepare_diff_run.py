@@ -45,6 +45,46 @@ def copy_helper_scripts(repo_root: Path, main_root: Path) -> None:
         chmod_exec(target)
 
 
+def patch_dockerfile(repo_root: Path) -> None:
+    dockerfile = repo_root / "Dockerfile.build"
+    if not dockerfile.exists():
+        raise SystemExit(f"Dockerfile.build not found: {dockerfile}")
+
+    text = dockerfile.read_text(encoding="utf-8")
+    marker = "# diff-generator: ensure git is available for diff capture"
+    if marker in text:
+        return
+
+    install_layer = [
+        "\n",
+        f"{marker}\n",
+        "RUN if command -v git >/dev/null 2>&1; then \\\n",
+        "        exit 0; \\\n",
+        "    elif command -v apt-get >/dev/null 2>&1; then \\\n",
+        "        apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*; \\\n",
+        "    elif command -v apk >/dev/null 2>&1; then \\\n",
+        "        apk add --no-cache git ca-certificates; \\\n",
+        "    elif command -v dnf >/dev/null 2>&1; then \\\n",
+        "        dnf install -y git ca-certificates && dnf clean all; \\\n",
+        "    elif command -v yum >/dev/null 2>&1; then \\\n",
+        "        yum install -y git ca-certificates && yum clean all; \\\n",
+        "    elif command -v microdnf >/dev/null 2>&1; then \\\n",
+        "        microdnf install -y git ca-certificates && microdnf clean all; \\\n",
+        "    else \\\n",
+        "        echo 'No supported package manager found to install git' >&2; exit 1; \\\n",
+        "    fi\n",
+    ]
+
+    lines = text.splitlines(keepends=True)
+    for idx, line in enumerate(lines):
+        if line.lstrip().upper().startswith("FROM "):
+            lines = lines[: idx + 1] + install_layer + lines[idx + 1 :]
+            dockerfile.write_text("".join(lines), encoding="utf-8")
+            return
+
+    raise SystemExit(f"cannot find FROM line in {dockerfile}")
+
+
 def patch_milvus_helpers(repo_root: Path) -> None:
     conan_patch = repo_root / "patches" / "conan_patch.sh"
     dep_patch = repo_root / "patches" / "dep_patch.sh"
@@ -124,6 +164,7 @@ def main() -> int:
 
     project = load_project(main_root / "projects.json", project_name)
     copy_helper_scripts(repo_root, main_root)
+    patch_dockerfile(repo_root)
 
     if project.get("special") == "milvus_conan":
         patch_milvus_helpers(repo_root)
