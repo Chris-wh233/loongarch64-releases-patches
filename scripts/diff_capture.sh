@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-source_dir="${1:?source dir is required}"
+diff_dir="${1:?diff dir is required}"
 output_dir="${2:?output dir is required}"
-project="${3:?project is required}"
-version="${4:?version is required}"
+diff_file="${3:?diff file is required}"
+project="${4:?project is required}"
+version="${5:?version is required}"
 
 mkdir -p "$output_dir"
 
@@ -24,22 +25,7 @@ write_diff() {
   fi
 }
 
-write_diff "$source_dir" "$output_dir/source.diff" .
-
-if [ -d "${HOME}/.conan/.git" ]; then
-  write_diff "${HOME}/.conan" "$output_dir/conan-home.diff" . ":(exclude)data"
-fi
-
-if [ -d "${HOME}/.conan/data/.git" ]; then
-  write_diff "${HOME}/.conan/data" "$output_dir/conan-data.diff" .
-fi
-
-if [ -d "${HOME}/.cargo/registry/src" ]; then
-  while IFS= read -r cargo_repo; do
-    name="$(basename "$cargo_repo")"
-    write_diff "$cargo_repo" "$output_dir/cargo-registry-${name}.diff" .
-  done < <(find "${HOME}/.cargo/registry/src" -mindepth 2 -maxdepth 2 -type d -name 'cty-*' 2>/dev/null)
-fi
+write_diff "$diff_dir" "$output_dir/$diff_file" .
 
 cat > "$output_dir/manifest.json" <<EOF
 {
@@ -47,12 +33,11 @@ cat > "$output_dir/manifest.json" <<EOF
   "version": "$version",
   "generated_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
   "diff_files": [
-$(find "$output_dir" -maxdepth 1 -type f -name '*.diff' -printf '    "%f",\n' | sed '$ s/,$//')
+$(find "$output_dir" -maxdepth 1 -type f \( -name '*.diff' -o -name '*.patch' \) -printf '    "%f",\n' | sed '$ s/,$//')
   ]
 }
 EOF
 
 echo "Generated diff files for ${project} ${version}:"
-find "$output_dir" -maxdepth 1 -type f -name '*.diff' -printf '  %f\n' | sort
+find "$output_dir" -maxdepth 1 -type f \( -name '*.diff' -o -name '*.patch' \) -printf '  %f\n' | sort
 exit 0
-

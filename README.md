@@ -19,6 +19,12 @@ Project-specific package needs are maintained in `projects.json` as
 `extra_packages`. Plain entries are installed with `apt-get`; entries prefixed
 with `pip:` are installed with `python3 -m pip`.
 
+Patch diff capture is also configured in `projects.json`. Each diff group has
+`patch_baseline`, `patch_anchor`, `diff_dir`, and `diff_file`; numbered variants
+such as `patch_baseline_2` define additional files. The generator inserts a Git
+baseline before `patch_baseline`, captures a diff after `patch_anchor`, and
+stops after the last configured capture in `scripts/build.sh`.
+
 Full scheduled runs include projects where `patched` is `true` unless the
 project also sets `skip_build` to `true`. Manual single-project runs ignore
 `skip_build`, but still require `patched: true`.

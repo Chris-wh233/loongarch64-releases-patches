@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import json
-import os
 import shutil
 import stat
 import sys
@@ -17,20 +16,6 @@ def load_project(config_path: Path, name: str) -> dict:
     raise SystemExit(f"unknown project: {name}")
 
 
-def insert_after(lines: list[str], needle: str, insertion: list[str], label: str) -> list[str]:
-    for idx, line in enumerate(lines):
-        if needle in line:
-            return lines[: idx + 1] + insertion + lines[idx + 1 :]
-    raise SystemExit(f"cannot find {label} anchor: {needle}")
-
-
-def insert_before(lines: list[str], needle: str, insertion: list[str], label: str) -> list[str]:
-    for idx, line in enumerate(lines):
-        if needle in line:
-            return lines[:idx] + insertion + lines[idx:]
-    raise SystemExit(f"cannot find {label} anchor: {needle}")
-
-
 def chmod_exec(path: Path) -> None:
     mode = path.stat().st_mode
     path.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
@@ -43,38 +28,6 @@ def copy_helper_scripts(repo_root: Path, main_root: Path) -> None:
         target = scripts_dir / name
         shutil.copy2(main_root / "scripts" / name, target)
         chmod_exec(target)
-
-
-def patch_milvus_helpers(repo_root: Path) -> None:
-    conan_patch = repo_root / "patches" / "conan_patch.sh"
-    dep_patch = repo_root / "patches" / "dep_patch.sh"
-
-    conan_lines = conan_patch.read_text(encoding="utf-8").splitlines(keepends=True)
-    conan_lines = insert_after(
-        conan_lines,
-        "conan config init",
-        [
-            '_diff_root="$(cd "$(dirname "$0")/.." && pwd)"\n',
-            'cat > "$HOME/.conan/.gitignore" <<EOF\n',
-            "data/\n",
-            "EOF\n",
-            'bash "${_diff_root}/scripts/diff_baseline.sh" "$HOME/.conan" "milvus-conan-home"\n',
-        ],
-        "milvus conan config",
-    )
-    conan_patch.write_text("".join(conan_lines), encoding="utf-8")
-
-    dep_lines = dep_patch.read_text(encoding="utf-8").splitlines(keepends=True)
-    dep_lines = insert_after(
-        dep_lines,
-        "    conan_download_dep",
-        [
-            '    _diff_root="$(cd "$(dirname "$0")/.." && pwd)"\n',
-            '    bash "${_diff_root}/scripts/diff_baseline.sh" "$HOME/.conan/data" "milvus-conan-data"\n',
-        ],
-        "milvus conan data",
-    )
-    dep_patch.write_text("".join(dep_lines), encoding="utf-8")
 
 
 def patch_source_tag_usage(lines: list[str]) -> list[str]:
@@ -106,40 +59,138 @@ def add_source_tag_default(lines: list[str], source_tag: str) -> list[str]:
     return lines[:1] + insertion + lines[1:]
 
 
-def patch_build(repo_root: Path, main_root: Path, project: dict, version: str, source_tag: str, output_dir: str) -> None:
+def diff_groups(project: dict) -> list[dict]:
+    groups = []
+    if all(k in project for k in ("patch_baseline", "patch_anchor", "diff_dir", "diff_file")):
+        groups.append({
+            "id": "default",
+            "patch_baseline": project["patch_baseline"],
+            "patch_anchor": project["patch_anchor"],
+            "diff_dir": project["diff_dir"],
+            "diff_file": project["diff_file"],
+        })
+
+    idx = 1
+    while True:
+        keys = {
+            "patch_baseline": f"patch_baseline_{idx}",
+            "patch_anchor": f"patch_anchor_{idx}",
+            "diff_dir": f"diff_dir_{idx}",
+            "diff_file": f"diff_file_{idx}",
+        }
+        present = [key in project for key in keys.values()]
+        if not any(present):
+            break
+        if not all(present):
+            missing = [name for name, key in keys.items() if key not in project]
+            raise SystemExit(f"{project['name']} has incomplete diff group {idx}: missing {', '.join(missing)}")
+        groups.append({
+            "id": str(idx),
+            "patch_baseline": project[keys["patch_baseline"]],
+            "patch_anchor": project[keys["patch_anchor"]],
+            "diff_dir": project[keys["diff_dir"]],
+            "diff_file": project[keys["diff_file"]],
+        })
+        idx += 1
+
+    return groups
+
+
+def shell_files(repo_root: Path) -> list[Path]:
+    files = [repo_root / "scripts" / "build.sh"]
+    for directory in (repo_root / "scripts", repo_root / "patches"):
+        if directory.exists():
+            files.extend(sorted(path for path in directory.glob("*.sh") if path not in files))
+    return [path for path in files if path.exists()]
+
+
+def find_anchor(files: dict[Path, list[str]], needle: str, label: str) -> tuple[Path, int]:
+    matches = []
+    for path, lines in files.items():
+        for idx, line in enumerate(lines):
+            if needle in line:
+                matches.append((path, idx))
+    if not matches:
+        raise SystemExit(f"cannot find {label} anchor: {needle}")
+    return matches[0]
+
+
+def add_insertion(insertions: dict[Path, dict[int, dict[str, list[str]]]], path: Path, idx: int, position: str, lines: list[str]) -> None:
+    insertions.setdefault(path, {}).setdefault(idx, {"before": [], "after": []})[position].extend(lines)
+
+
+def patch_shell_files(repo_root: Path, project: dict, version: str, source_tag: str, output_dir: str) -> None:
+    groups = diff_groups(project)
+    if not groups:
+        raise SystemExit(f"{project['name']} has no diff groups; define patch_baseline/patch_anchor/diff_dir/diff_file")
+
+    files = {path: path.read_text(encoding="utf-8").splitlines(keepends=True) for path in shell_files(repo_root)}
     build_sh = repo_root / "scripts" / "build.sh"
-    lines = build_sh.read_text(encoding="utf-8").splitlines(keepends=True)
-    lines = patch_source_tag_usage(lines)
-    lines = add_source_tag_default(lines, source_tag)
+    if build_sh not in files:
+        raise SystemExit(f"missing build script: {build_sh}")
+    files[build_sh] = add_source_tag_default(patch_source_tag_usage(files[build_sh]), source_tag)
 
-    source_expr = project.get("source_dir_template", "${SRCS}/${VERSION}")
-    baseline_anchor = project.get("baseline_anchor") or project["patch_anchor"]
-    baseline = [
-        "\n",
-        "# diff-generator: establish baseline before LoongArch64 adaptations\n",
-        f'bash "${{ROOT_DIR}}/scripts/diff_baseline.sh" "{source_expr}" "{project["name"]}-source"\n',
-    ]
-    lines = insert_before(lines, baseline_anchor, baseline, "baseline")
+    insertions: dict[Path, dict[int, dict[str, list[str]]]] = {}
+    build_capture_indexes = []
 
-    if project.get("special") == "next_cargo":
-        lines = insert_before(
-            lines,
-            "sed -i",
+    for group in groups:
+        baseline_path, baseline_idx = find_anchor(files, group["patch_baseline"], f"{project['name']} baseline {group['id']}")
+        capture_path, capture_idx = find_anchor(files, group["patch_anchor"], f"{project['name']} capture {group['id']}")
+        label = f"{project['name']}-{group['id']}-{group['diff_file']}"
+
+        add_insertion(
+            insertions,
+            baseline_path,
+            baseline_idx,
+            "before",
             [
-                '      bash "${ROOT_DIR}/scripts/diff_baseline.sh" "$(dirname "$(dirname "${cty}")")" "nextjs-cargo-cty"\n',
+                "\n",
+                f"# diff-generator: establish baseline for {group['diff_file']}\n",
+                '_diff_root="$(cd "$(dirname "$0")/.." && pwd)"\n',
+                f'bash "${{_diff_root}}/scripts/diff_baseline.sh" "{group["diff_dir"]}" "{label}"\n',
             ],
-            "next.js cargo baseline",
         )
+        add_insertion(
+            insertions,
+            capture_path,
+            capture_idx,
+            "after",
+            [
+                "\n",
+                f"# diff-generator: capture {group['diff_file']}\n",
+                '_diff_root="$(cd "$(dirname "$0")/.." && pwd)"\n',
+                f'bash "${{_diff_root}}/scripts/diff_capture.sh" "{group["diff_dir"]}" "{output_dir}" "{group["diff_file"]}" "{project["name"]}" "{version}"\n',
+            ],
+        )
+        if capture_path == build_sh:
+            build_capture_indexes.append(capture_idx)
 
-    capture = [
-        "\n",
-        "# diff-generator: capture diffs and stop before binary build continues\n",
-        f'bash "${{ROOT_DIR}}/scripts/diff_capture.sh" "{source_expr}" "{output_dir}" "{project["name"]}" "{version}"\n',
-        "exit 0\n",
-    ]
-    lines = insert_after(lines, project["patch_anchor"], capture, "capture")
-    build_sh.write_text("".join(lines), encoding="utf-8")
-    chmod_exec(build_sh)
+    if not build_capture_indexes:
+        raise SystemExit(f"{project['name']} has no capture anchor in scripts/build.sh; cannot stop before binary build")
+
+    final_idx = max(build_capture_indexes)
+    add_insertion(
+        insertions,
+        build_sh,
+        final_idx,
+        "after",
+        [
+            "\n",
+            "# diff-generator: stop after configured diff captures\n",
+            "exit 0\n",
+        ],
+    )
+
+    for path, lines in files.items():
+        path_insertions = insertions.get(path, {})
+        rewritten = []
+        for idx, line in enumerate(lines):
+            rewritten.extend(path_insertions.get(idx, {}).get("before", []))
+            rewritten.append(line)
+            rewritten.extend(path_insertions.get(idx, {}).get("after", []))
+        path.write_text("".join(rewritten), encoding="utf-8")
+        if path.suffix == ".sh":
+            chmod_exec(path)
 
 
 def main() -> int:
@@ -157,12 +208,7 @@ def main() -> int:
     project = load_project(main_root / "projects.json", project_name)
     copy_helper_scripts(repo_root, main_root)
 
-    if project.get("special") == "milvus_conan":
-        patch_milvus_helpers(repo_root)
-    if project_name == "next.js":
-        project["special"] = "next_cargo"
-
-    patch_build(repo_root, main_root, project, version, source_tag, output_dir)
+    patch_shell_files(repo_root, project, version, source_tag, output_dir)
     return 0
 
 

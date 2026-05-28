@@ -4,14 +4,8 @@ set -euo pipefail
 path="${1:?path is required}"
 label="${2:-baseline}"
 
-if [ ! -d "$path" ]; then
-  echo "diff baseline skipped for missing path: $path"
-  exit 0
-fi
-
-if [ -d "$path/.git" ]; then
-  exit 0
-fi
+mkdir -p "$path"
+rm -rf "$path/.git"
 
 git -C "$path" init -q
 git -C "$path" config user.name "diff-generator"
@@ -23,4 +17,3 @@ if git -C "$path" diff --cached --quiet; then
 else
   git -C "$path" commit -q -m "baseline: $label"
 fi
-

@@ -41,7 +41,7 @@ def main() -> int:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
     docker_image = first_from(main_root / "Dockerfile.base") or project.get("docker_image")
-    diff_files = sorted(p.name for p in diff_dir.glob("*.diff"))
+    diff_files = sorted(p.name for p in diff_dir.iterdir() if p.suffix in (".diff", ".patch"))
 
     output = {
         "project": project_name,
