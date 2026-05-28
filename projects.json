@@ -253,15 +253,7 @@
         "pkg-config",
         "rustc"
       ],
-      "skip_build": true,
-      "patch_baseline_1": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\"",
-      "patch_anchor_1": "target_arch = \"loongarch64\",' \"${cty}\"",
-      "diff_dir_1": "${SRCS}/${VERSION}",
-      "diff_file_1": "next_src.patch",
-      "patch_baseline_2": "sed -i '/target_arch = \"mips64\"/a \\",
-      "patch_anchor_2": "target_arch = \"loongarch64\",' \"${cty}\"",
-      "diff_dir_2": "$(dirname \"$(dirname \"${cty}\")\")",
-      "diff_file_2": "cty.patch"
+      "skip_build": true
     },
     {
       "name": "podman-compose",

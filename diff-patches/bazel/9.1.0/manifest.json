@@ -1,8 +1,0 @@
-{
-  "project": "bazel",
-  "version": "9.1.0",
-  "generated_at": "2026-05-27T09:52:27Z",
-  "diff_files": [
-    "source.diff"
-  ]
-}

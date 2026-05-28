@@ -1,8 +1,0 @@
-{
-  "project": "neo4j",
-  "version": "5.26.26",
-  "generated_at": "2026-05-27T09:00:41Z",
-  "diff_files": [
-    "source.diff"
-  ]
-}
