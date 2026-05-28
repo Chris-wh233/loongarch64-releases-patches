@@ -1,0 +1,10 @@
+diff --git a/crates/oxide/Cargo.toml b/crates/oxide/Cargo.toml
+index 0965320..b443b50 100644
+--- a/crates/oxide/Cargo.toml
++++ b/crates/oxide/Cargo.toml
+@@ -23,3 +23,5 @@ regex = "1.11.1"
+ tempfile = "3.13.0"
+ pretty_assertions = "1.4.1"
+ unicode-width = "0.2.0"
++[lib]
++crate-type = ["cdylib", "rlib"]

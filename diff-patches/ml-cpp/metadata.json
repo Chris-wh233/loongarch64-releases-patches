@@ -8,18 +8,18 @@
   "docker_image": "lcr.loongnix.cn/library/debian:forky",
   "dockerfile": "Dockerfile.base",
   "extra_packages": [],
-  "last_generated_at": "2026-05-27T14:36:20Z",
+  "last_generated_at": "2026-05-28T08:18:29Z",
   "diff_directory": "diff-patches/ml-cpp/v9.4.1",
   "diff_files": [
-    "source.diff"
+    "ml_cpp_src.patch"
   ],
   "description": "Captures Elastic ml-cpp source adaptations applied by patches/patch.sh.",
   "generated_manifest": {
     "project": "ml-cpp",
     "version": "v9.4.1",
-    "generated_at": "2026-05-27T14:36:20Z",
+    "generated_at": "2026-05-28T08:18:29Z",
     "diff_files": [
-      "source.diff"
+      "ml_cpp_src.patch"
     ]
   }
 }

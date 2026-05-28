@@ -10,14 +10,14 @@
   "extra_packages": [
     "golang"
   ],
-  "last_generated_at": "2026-05-27T09:10:38Z",
+  "last_generated_at": "2026-05-28T08:16:22Z",
   "diff_directory": "diff-patches/coredns/1.14.3",
   "diff_files": [],
   "description": "Captures CoreDNS module dependency changes performed by patches/patch.sh.",
   "generated_manifest": {
     "project": "coredns",
     "version": "1.14.3",
-    "generated_at": "2026-05-27T09:10:38Z",
+    "generated_at": "2026-05-28T08:16:21Z",
     "diff_files": []
   }
 }

@@ -8,18 +8,18 @@
   "docker_image": "lcr.loongnix.cn/library/debian:forky",
   "dockerfile": "Dockerfile.base",
   "extra_packages": [],
-  "last_generated_at": "2026-05-27T14:36:25Z",
+  "last_generated_at": "2026-05-28T08:18:52Z",
   "diff_directory": "diff-patches/tailwindcss/v4.2.4",
   "diff_files": [
-    "source.diff"
+    "tailwindcss_src.patch"
   ],
   "description": "Captures Tailwind CSS source adaptations applied before the Rust build.",
   "generated_manifest": {
     "project": "tailwindcss",
     "version": "v4.2.4",
-    "generated_at": "2026-05-27T14:36:25Z",
+    "generated_at": "2026-05-28T08:18:52Z",
     "diff_files": [
-      "source.diff"
+      "tailwindcss_src.patch"
     ]
   }
 }

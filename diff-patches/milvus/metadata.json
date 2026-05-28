@@ -14,22 +14,22 @@
     "python3-venv",
     "pip:conan<2"
   ],
-  "last_generated_at": "2026-05-27T14:36:12Z",
+  "last_generated_at": "2026-05-28T08:18:20Z",
   "diff_directory": "diff-patches/milvus/2.6.17",
   "diff_files": [
-    "conan-data.diff",
-    "conan-home.diff",
-    "source.diff"
+    "conan_config.patch",
+    "milvus_src.patch",
+    "thirdparty_dep.patch"
   ],
   "description": "Captures Milvus source adaptations, Conan configuration changes, and downloaded Conan recipe adaptations as separate diffs.",
   "generated_manifest": {
     "project": "milvus",
     "version": "2.6.17",
-    "generated_at": "2026-05-27T14:36:12Z",
+    "generated_at": "2026-05-28T08:18:19Z",
     "diff_files": [
-      "conan-home.diff",
-      "source.diff",
-      "conan-data.diff"
+      "thirdparty_dep.patch",
+      "milvus_src.patch",
+      "conan_config.patch"
     ]
   }
 }

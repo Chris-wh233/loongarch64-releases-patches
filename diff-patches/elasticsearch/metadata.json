@@ -10,18 +10,18 @@
   "extra_packages": [
     "perl"
   ],
-  "last_generated_at": "2026-05-27T09:43:13Z",
+  "last_generated_at": "2026-05-28T08:17:39Z",
   "diff_directory": "diff-patches/elasticsearch/9.4.1",
   "diff_files": [
-    "source.diff"
+    "elasticsearch_src.patch"
   ],
   "description": "Captures Elasticsearch source and helper-file adaptations applied by patches/patch.sh.",
   "generated_manifest": {
     "project": "elasticsearch",
     "version": "9.4.1",
-    "generated_at": "2026-05-27T09:43:12Z",
+    "generated_at": "2026-05-28T08:17:35Z",
     "diff_files": [
-      "source.diff"
+      "elasticsearch_src.patch"
     ]
   }
 }

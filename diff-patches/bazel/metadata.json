@@ -10,18 +10,18 @@
   "extra_packages": [
     "unzip"
   ],
-  "last_generated_at": "2026-05-27T09:52:28Z",
+  "last_generated_at": "2026-05-28T08:16:04Z",
   "diff_directory": "diff-patches/bazel/9.1.0",
   "diff_files": [
-    "source.diff"
+    "bazel_src.patch"
   ],
   "description": "Captures Bazel source adaptations applied by patches/patch.sh before the Bazel build starts.",
   "generated_manifest": {
     "project": "bazel",
     "version": "9.1.0",
-    "generated_at": "2026-05-27T09:52:27Z",
+    "generated_at": "2026-05-28T08:15:58Z",
     "diff_files": [
-      "source.diff"
+      "bazel_src.patch"
     ]
   }
 }

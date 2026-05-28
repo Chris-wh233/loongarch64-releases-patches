@@ -1,0 +1,10 @@
+{
+  "project": "milvus",
+  "version": "2.6.17",
+  "generated_at": "2026-05-28T08:18:19Z",
+  "diff_files": [
+    "thirdparty_dep.patch",
+    "milvus_src.patch",
+    "conan_config.patch"
+  ]
+}

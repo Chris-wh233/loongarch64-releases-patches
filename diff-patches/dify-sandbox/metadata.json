@@ -8,14 +8,14 @@
   "docker_image": "lcr.loongnix.cn/library/debian:forky",
   "dockerfile": "Dockerfile.base",
   "extra_packages": [],
-  "last_generated_at": "2026-05-27T09:27:55Z",
+  "last_generated_at": "2026-05-28T08:16:28Z",
   "diff_directory": "diff-patches/dify-sandbox/0.2.15",
   "diff_files": [],
   "description": "Captures added LoongArch64 syscall/static files and the generated LoongArch64 build script.",
   "generated_manifest": {
     "project": "dify-sandbox",
     "version": "0.2.15",
-    "generated_at": "2026-05-27T09:27:55Z",
+    "generated_at": "2026-05-28T08:16:27Z",
     "diff_files": []
   }
 }
