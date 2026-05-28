@@ -199,7 +199,7 @@
         "python3-venv",
         "pip:conan<2"
       ],
-      "patch_baseline_1": "conan config init",
+      "patch_baseline_1": "# conanfile for loongarch",
       "patch_anchor_1": "\"${PATCHES}/conan_patch.sh\" \"${SRC_DIR}\"",
       "diff_dir_1": "$HOME/.conan",
       "diff_file_1": "conan_config.patch",
