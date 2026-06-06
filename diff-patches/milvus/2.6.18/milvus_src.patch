@@ -1,0 +1,306 @@
+diff --git a/internal/core/conanfile.py b/internal/core/conanfile.py
+index ad8b6de..2cfa820 100644
+--- a/internal/core/conanfile.py
++++ b/internal/core/conanfile.py
+@@ -50,7 +50,7 @@ class MilvusConan(ConanFile):
+ 
+     generators = ("cmake", "cmake_find_package")
+     default_options = {
+-        "openssl:shared": True,
++        "openssl:shared": False,
+         "libevent:shared": True,
+         "double-conversion:shared": True,
+         "folly:shared": True,
+diff --git a/internal/core/src/exec/expression/SimdFilter.cpp b/internal/core/src/exec/expression/SimdFilter.cpp
+index 886f857..eaf7ac7 100644
+--- a/internal/core/src/exec/expression/SimdFilter.cpp
++++ b/internal/core/src/exec/expression/SimdFilter.cpp
+@@ -25,7 +25,10 @@
+ // ═══════════════════════════════════════════════════════════════════════════
+ 
+ #include "SimdFilter.h"
++#include <algorithm> 
++#if defined(__x86_64__) || defined(__aarch64__)
+ #include "SimdFilterImpl.h"
++#endif
+ 
+ // ── CPU feature detection ───────────────────────────────────────────────
+ 
+@@ -112,21 +115,34 @@ namespace baseline {
+ using Arch = xsimd::sse2;
+ #elif defined(__aarch64__)
+ using Arch = xsimd::neon64;
+-#else
+-using Arch = xsimd::default_arch;
+ #endif
+ 
+ template <typename T>
+ void
+ filterChunk(
+     const T* data, int size, uint8_t* bitmap, const T* vals, int num_vals) {
++#if defined(__x86_64__) || defined(__aarch64__)
+     detail::filterChunkImpl<T, Arch>(data, size, bitmap, vals, num_vals);
++#else 
++    if (num_vals <= 0 || size <= 0) { 
++	return; 
++    } 
++    for (int i = 0; i < size; ++i) { 
++	if (std::binary_search(vals, vals + num_vals, data[i])) { 
++	    bitmap[i / 8] |= static_cast<uint8_t>(1 << (i % 8)); 
++	} 
++    } 
++#endif
+ }
+ 
+ template <typename T>
+ int
+ laneCount() {
++#if defined(__x86_64__) || defined(__aarch64__)
+     return xsimd::batch<T, Arch>::size;
++#else 
++    return 1; 
++#endif
+ }
+ 
+ #define INSTANTIATE(T)                                                    \
+diff --git a/internal/core/thirdparty/jemalloc/CMakeLists.txt b/internal/core/thirdparty/jemalloc/CMakeLists.txt
+index 9dc2ebe..349499e 100644
+--- a/internal/core/thirdparty/jemalloc/CMakeLists.txt
++++ b/internal/core/thirdparty/jemalloc/CMakeLists.txt
+@@ -68,6 +68,9 @@ ExternalProject_Add(
+         PREFIX ${CMAKE_BINARY_DIR}/3rdparty_download/jemalloc-subbuild
+         URL ${JEMALLOC_SOURCE_URL}
+         PATCH_COMMAND touch doc/jemalloc.3 doc/jemalloc.html
++        COMMAND cp -f /src/patches/config.guess build-aux/config.guess
++        COMMAND cp -f /src/patches/config.sub build-aux/config.sub
++        COMMAND sed -i "/#  ifdef __s390__/i #  if defined __loongarch__\\n#    define LG_QUANTUM          4\\n#  endif" include/jemalloc/internal/quantum.h
+         CONFIGURE_COMMAND ${JEMALLOC_CONFIGURE_COMMAND}
+         BUILD_IN_SOURCE 1
+         BUILD_COMMAND ${JEMALLOC_BUILD_COMMAND}
+diff --git a/internal/core/thirdparty/knowhere/CMakeLists.txt b/internal/core/thirdparty/knowhere/CMakeLists.txt
+index 549747a..1014296 100644
+--- a/internal/core/thirdparty/knowhere/CMakeLists.txt
++++ b/internal/core/thirdparty/knowhere/CMakeLists.txt
+@@ -51,6 +51,155 @@ FetchContent_Declare(
+ FetchContent_GetProperties( knowhere )
+ if ( NOT knowhere_POPULATED )
+     FetchContent_Populate( knowhere )
++    if (CMAKE_SYSTEM_PROCESSOR MATCHES "loongarch64")
++        set(KNOWHERE_PATCH_MARKER "${knowhere_SOURCE_DIR}/.loongarch_patched")
++        if(NOT EXISTS "${KNOWHERE_PATCH_MARKER}")
++            message(STATUS "Patching Knowhere for LoongArch...")
++        
++            # diskann
++            set(DISKANN_PATCH_VAL "#if defined(__loongarch64)\\n#define SIMDE_ENABLE_NATIVE_ALIASES\\n#include <simde/x86/sse.h>\\n#include <simde/x86/avx.h>\\n#else\\n#include <xmmintrin.h>\\n#endif")
++            execute_process(
++                COMMAND sed -i "s|#include <xmmintrin.h>|${DISKANN_PATCH_VAL}|g" 
++                "${knowhere_SOURCE_DIR}/thirdparty/DiskANN/include/diskann/utils.h"
++                "${knowhere_SOURCE_DIR}/thirdparty/DiskANN/src/index.cpp"
++            )
++        
++            # knowhere
++            file(COPY "/src/patches/distances_lsx.cc" DESTINATION "${knowhere_SOURCE_DIR}/src/simd/")
++            file(COPY "/src/patches/distances_lsx.h" DESTINATION "${knowhere_SOURCE_DIR}/src/simd/")
++        
++            # knowhere -- libfaiss.cmake 
++            set(FAISS_CMAKE "${knowhere_SOURCE_DIR}/cmake/libs/libfaiss.cmake")
++            set(FAISS_INS_A [=[if(__LOONGARCH64)
++  set(UTILS_SRC src/simd/hook.cc src/simd/distances_lsx.cc src/simd/distances_ref.cc)
++  add_library(knowhere_utils STATIC ${UTILS_SRC})
++  target_link_libraries(knowhere_utils PUBLIC glog::glog)
++endif()]=])
++            string(REPLACE "\n" "\\n" FAISS_INS_A_ESC "${FAISS_INS_A}")
++            execute_process(COMMAND sed -i "/list(REMOVE_ITEM FAISS_SRCS \${FAISS_RHNSW_SRCS})/a ${FAISS_INS_A_ESC}" ${FAISS_CMAKE})
++
++            set(FAISS_INS_B [=[if(__LOONGARCH64)
++    knowhere_file_glob(GLOB FAISS_SPECIFIC_SRCS
++            thirdparty/faiss/faiss/impl/*avx.cpp
++            thirdparty/faiss/faiss/impl/*neon.cpp
++            thirdparty/faiss/faiss/impl/*sve.cpp
++            thirdparty/faiss/faiss/impl/*rvv.cpp
++            thirdparty/faiss/faiss/impl/*avx2.cpp
++            thirdparty/faiss/faiss/impl/*avx512.cpp
++            thirdparty/faiss/faiss/impl/*sse.cpp
++    )
++
++  list(REMOVE_ITEM FAISS_SRCS ${FAISS_SPECIFIC_SRCS})
++  add_library(faiss STATIC ${FAISS_SRCS})
++
++  target_compile_options(
++    faiss
++    PRIVATE $<$<COMPILE_LANGUAGE:CXX>:
++            -mlsx
++            -Wno-sign-compare
++            -Wno-unused-variable
++            -Wno-reorder
++            -Wno-unused-local-typedefs
++            -Wno-unused-function
++            -Wno-strict-aliasing>)
++
++  add_dependencies(faiss knowhere_utils)
++  target_link_libraries(faiss PUBLIC OpenMP::OpenMP_CXX ${BLAS_LIBRARIES}
++                                     ${LAPACK_LIBRARIES} knowhere_utils)
++  target_compile_definitions(faiss PRIVATE FINTEGER=int)
++endif()]=])
++            string(REPLACE "\n" "\\n" FAISS_INS_B_ESC "${FAISS_INS_B}")
++            execute_process(COMMAND sed -i "/include_directories(\${xxHash_INCLUDE_DIRS})/a ${FAISS_INS_B_ESC}" ${FAISS_CMAKE})
++        
++            # knowhere -- platform_check.cmake
++            set(PLAT_CMAKE "${knowhere_SOURCE_DIR}/cmake/utils/platform_check.cmake")
++            execute_process(COMMAND sed -i "/macro(detect_target_arch)/a \    check_symbol_exists(__loongarch64 \"\" __LOONGARCH64)" ${PLAT_CMAKE})
++            execute_process(COMMAND sed -i "s/AND NOT __X86_64/AND NOT __X86_64\\n     AND NOT __LOONGARCH64/g" ${PLAT_CMAKE})
++
++            # knowhere -- hook.cc
++            set(HOOK_CC "${knowhere_SOURCE_DIR}/src/simd/hook.cc")
++            execute_process(COMMAND sed -i "/#include \"distances_ref.h\"/i #if defined(__loongarch64)\\n#include \"distances_lsx.h\"\\n#endif" ${HOOK_CC})
++            execute_process(COMMAND sed -i "/decltype(fvec_inner_product)/i #if !defined(__loongarch__)" ${HOOK_CC})
++        
++            set(HOOK_LSX_PTRS [=[#else
++decltype(fvec_inner_product) fvec_inner_product = fvec_inner_product_lsx;
++decltype(fvec_L2sqr) fvec_L2sqr = fvec_L2sqr_lsx;
++decltype(fvec_L1) fvec_L1 = fvec_L1_lsx;
++decltype(fvec_Linf) fvec_Linf = fvec_Linf_lsx;
++decltype(fvec_norm_L2sqr) fvec_norm_L2sqr = fvec_norm_L2sqr_lsx;
++decltype(fvec_L2sqr_ny) fvec_L2sqr_ny = fvec_L2sqr_ny_lsx;
++decltype(fvec_inner_products_ny) fvec_inner_products_ny = fvec_inner_products_ny_lsx;
++decltype(fvec_madd) fvec_madd = fvec_madd_lsx;
++decltype(fvec_madd_and_argmin) fvec_madd_and_argmin = fvec_madd_and_argmin_lsx;
++
++decltype(fvec_L2sqr_ny_nearest) fvec_L2sqr_ny_nearest = fvec_L2sqr_ny_nearest_lsx;
++decltype(fvec_L2sqr_ny_nearest_y_transposed) fvec_L2sqr_ny_nearest_y_transposed =
++    fvec_L2sqr_ny_nearest_y_transposed_lsx;
++decltype(fvec_L2sqr_ny_transposed) fvec_L2sqr_ny_transposed = fvec_L2sqr_ny_transposed_lsx;
++
++decltype(fvec_inner_product_batch_4) fvec_inner_product_batch_4 = fvec_inner_product_batch_4_lsx;
++decltype(fvec_L2sqr_batch_4) fvec_L2sqr_batch_4 = fvec_L2sqr_batch_4_lsx;
++
++decltype(ivec_inner_product) ivec_inner_product = ivec_inner_product_lsx;
++decltype(ivec_L2sqr) ivec_L2sqr = ivec_L2sqr_lsx;
++#endif]=])
++            string(REPLACE "\n" "\\n" HOOK_LSX_PTRS_ESC "${HOOK_LSX_PTRS}")
++            execute_process(COMMAND sed -i "/decltype(ivec_L2sqr)/a ${HOOK_LSX_PTRS_ESC}" ${HOOK_CC})
++
++            set(HOOK_INIT [=[#if defined(__loongarch64)
++    fvec_inner_product = fvec_inner_product_lsx;
++    fvec_L2sqr = fvec_L2sqr_lsx;
++    fvec_L1 = fvec_L1_lsx;
++    fvec_Linf = fvec_Linf_lsx;
++
++    fvec_norm_L2sqr = fvec_norm_L2sqr_lsx;
++    fvec_L2sqr_ny = fvec_L2sqr_ny_lsx;
++    fvec_inner_products_ny = fvec_inner_products_ny_lsx;
++    fvec_madd = fvec_madd_lsx;
++    fvec_madd_and_argmin = fvec_madd_and_argmin_lsx;
++
++    ivec_inner_product = ivec_inner_product_lsx;
++    ivec_L2sqr = ivec_L2sqr_lsx;
++
++    fp16_vec_inner_product = fp16_vec_inner_product_ref;
++    fp16_vec_L2sqr = fp16_vec_L2sqr_ref;
++    fp16_vec_norm_L2sqr = fp16_vec_norm_L2sqr_ref;
++    fp16_vec_inner_product_batch_4 = fp16_vec_inner_product_batch_4_ref;
++    fp16_vec_L2sqr_batch_4 = fp16_vec_L2sqr_batch_4_ref;
++
++    bf16_vec_inner_product = bf16_vec_inner_product_ref;
++    bf16_vec_L2sqr = bf16_vec_L2sqr_ref;
++    bf16_vec_norm_L2sqr = bf16_vec_norm_L2sqr_ref;
++    bf16_vec_inner_product_batch_4 = bf16_vec_inner_product_batch_4_ref;
++    bf16_vec_L2sqr_batch_4 = bf16_vec_L2sqr_batch_4_ref;
++
++    int8_vec_inner_product = int8_vec_inner_product_ref;
++    int8_vec_L2sqr = int8_vec_L2sqr_ref;
++    int8_vec_norm_L2sqr = int8_vec_norm_L2sqr_ref;
++    int8_vec_inner_product_batch_4 = int8_vec_inner_product_batch_4_ref;
++    int8_vec_L2sqr_batch_4 = int8_vec_L2sqr_batch_4_ref;
++
++    rabitq_dp_popcnt = rabitq_dp_popcnt_ref;
++    fvec_masked_sum = fvec_masked_sum_ref;
++
++    u64_binary_search_eq = u64_binary_search_eq_ref;
++    u64_binary_search_ge = u64_binary_search_ge_ref;
++    calculate_hash = calculate_hash_ref;
++    u32_jaccard_distance = u32_jaccard_distance_ref;
++    u32_jaccard_distance_batch_4 = u32_jaccard_distance_batch_4_ref;
++    u64_jaccard_distance = u64_jaccard_distance_ref;
++    u64_jaccard_distance_batch_4 = u64_jaccard_distance_batch_4_ref;
++    minhash_lsh_hit = minhash_lsh_hit_ref;
++
++    simd_type = "GENERIC";
++    support_pq_fast_scan = false;
++#endif]=])
++            string(REPLACE "\n" "\\n" HOOK_INIT_ESC "${HOOK_INIT}")
++            execute_process(COMMAND sed -i "/std::lock_guard<std::mutex> lock(hook_mutex);/a ${HOOK_INIT_ESC}" ${HOOK_CC})
++
++            file(WRITE "${KNOWHERE_PATCH_MARKER}" "patched")
++        endif()
++    endif()
+ 
+     # Adding the following target:
+     # knowhere
+diff --git a/internal/core/thirdparty/milvus-common/CMakeLists.txt b/internal/core/thirdparty/milvus-common/CMakeLists.txt
+index cd986a7..f74ba82 100644
+--- a/internal/core/thirdparty/milvus-common/CMakeLists.txt
++++ b/internal/core/thirdparty/milvus-common/CMakeLists.txt
+@@ -38,6 +38,19 @@ FetchContent_Declare(
+ FetchContent_GetProperties( milvus-common )
+ if ( NOT milvus-common_POPULATED )
+     FetchContent_Populate( milvus-common )
++    if (CMAKE_SYSTEM_PROCESSOR MATCHES "loongarch64")
++        set(MILVUS_COMMON_PATCH_MARKER "${milvus-common_SOURCE_DIR}/.loongarch_patched")
++        if (NOT EXISTS "${MILVUS_COMMON_PATCH_MARKER}")
++            message(STATUS "Patching milvus-common for LoongArch...")
++            set(CBLAS_PATCH_VAL "#if defined(__loongarch__)\\n#include <openblas/cblas.h>\\n#else\\n#include <cblas.h>\\n#endif")
++        
++            execute_process(
++                COMMAND sed -i "s|#include <cblas.h>|${CBLAS_PATCH_VAL}|g" 
++                "${milvus-common_SOURCE_DIR}/include/knowhere/thread_pool.h"
++            )
++            file(WRITE "${MILVUS_COMMON_PATCH_MARKER}" "patched")
++        endif()
++    endif()
+     # Adding the following target:
+     # milvus-common
+     add_subdirectory( ${milvus-common_SOURCE_DIR}
+diff --git a/internal/core/thirdparty/tantivy/CMakeLists.txt b/internal/core/thirdparty/tantivy/CMakeLists.txt
+index 1bd8091..e349d63 100644
+--- a/internal/core/thirdparty/tantivy/CMakeLists.txt
++++ b/internal/core/thirdparty/tantivy/CMakeLists.txt
+@@ -2,10 +2,10 @@ set(TANTIVY_FEATURES_LIST "" CACHE STRING "List of Cargo features to enable")
+ string(REPLACE ";" "," TANTIVY_FEATURES "${TANTIVY_FEATURES_LIST}")
+ 
+ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+-    set(CARGO_CMD cargo +1.89 build --verbose)
++    set(CARGO_CMD cargo build --verbose)
+     set(TARGET_DIR "debug")
+ else ()
+-    set(CARGO_CMD cargo +1.89 build --release --verbose)
++    set(CARGO_CMD cargo build --release --verbose)
+     set(TARGET_DIR "release")
+ endif ()
+ 
+diff --git a/scripts/3rdparty_build.sh b/scripts/3rdparty_build.sh
+index a8c0496..6bdb48f 100644
+--- a/scripts/3rdparty_build.sh
++++ b/scripts/3rdparty_build.sh
+@@ -158,7 +158,7 @@ case "${unameOut}" in
+     if [[ `gcc -v 2>&1 | sed -n 's/.*\(--with-default-libstdcxx-abi\)=\(\w*\).*/\2/p'` == "gcc4" ]]; then
+       "$CONAN" install ${CPP_SRC_DIR} --install-folder conan --build=missing -s build_type=${BUILD_TYPE} -s compiler.version=${GCC_VERSION} -r default-conan-local -u || { echo 'conan install failed'; exit 1; }
+     else
+-      "$CONAN" install ${CPP_SRC_DIR} --install-folder conan --build=missing -s build_type=${BUILD_TYPE} -s compiler.version=${GCC_VERSION} -s compiler.libcxx=libstdc++11 -r default-conan-local -u || { echo 'conan install failed'; exit 1; }
++      "$CONAN" install ${CPP_SRC_DIR} --install-folder conan --build=missing -pr:b=loongarch -pr:h=loongarch -r default-conan-local -u || { echo 'conan install failed'; exit 1; }
+     fi
+     ;;
+   *)
+diff --git a/scripts/setenv.sh b/scripts/setenv.sh
+index fda7b16..962a344 100644
+--- a/scripts/setenv.sh
++++ b/scripts/setenv.sh
+@@ -38,7 +38,7 @@ unameOut="$(uname -s)"
+ case "${unameOut}" in
+     Linux*)
+       # check if use asan.
+-      MILVUS_ENABLE_ASAN_LIB=$(ldd $ROOT_DIR/internal/core/output/lib/libmilvus_core.so | grep asan | awk '{print $3}')
++      MILVUS_ENABLE_ASAN_LIB=$(ldd $ROOT_DIR/internal/core/output/lib64/libmilvus_core.so | grep asan | awk '{print $3}')
+       if [ -n "$MILVUS_ENABLE_ASAN_LIB" ]; then
+           echo "Enable ASAN With ${MILVUS_ENABLE_ASAN_LIB}"
+           export MILVUS_ENABLE_ASAN_LIB="$MILVUS_ENABLE_ASAN_LIB"
