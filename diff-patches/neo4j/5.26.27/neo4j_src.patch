@@ -1,0 +1,41 @@
+diff --git a/community/cypher-shell/cypher-shell/pom.xml b/community/cypher-shell/cypher-shell/pom.xml
+index c0fd11a..7f38951 100644
+--- a/community/cypher-shell/cypher-shell/pom.xml
++++ b/community/cypher-shell/cypher-shell/pom.xml
+@@ -25,7 +25,7 @@
+         <moduleName>org.neo4j.shell</moduleName>
+         <name-of-main-class>org.neo4j.shell.Main</name-of-main-class>
+         <native-maven-plugin.version>0.9.9</native-maven-plugin.version>
+-        <os-maven-plugin.version>1.7.0</os-maven-plugin.version>
++        <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
+         <skipCompress>false</skipCompress>
+         <svm.version>21.3.0</svm.version>
+     </properties>
+diff --git a/community/cypher-shell/packaging/bin/create_native_image.java b/community/cypher-shell/packaging/bin/create_native_image.java
+index 7ab843c..7703920 100644
+--- a/community/cypher-shell/packaging/bin/create_native_image.java
++++ b/community/cypher-shell/packaging/bin/create_native_image.java
+@@ -280,6 +280,10 @@ public class create_native_image
+         {
+             return "mipsel_32";
+         }
++        if ( "loongarch64".equals( value ) ) 
++        { 
++            return "loongarch_64"; 
++        }
+         if ( "mips64".equals( value ) )
+         {
+             return "mips_64";
+diff --git a/community/unsafe/src/main/java/org/neo4j/internal/unsafe/UnsafeUtil.java b/community/unsafe/src/main/java/org/neo4j/internal/unsafe/UnsafeUtil.java
+index 8890701..4389de3 100644
+--- a/community/unsafe/src/main/java/org/neo4j/internal/unsafe/UnsafeUtil.java
++++ b/community/unsafe/src/main/java/org/neo4j/internal/unsafe/UnsafeUtil.java
+@@ -173,7 +173,7 @@ public final class UnsafeUtil {
+         String arch = System.getProperty("os.arch", "?");
+         return switch (arch) // list of architectures that support unaligned access to memory
+         {
+-            case "x86_64", "i386", "x86", "amd64", "ppc64", "ppc64le", "ppc64be", "aarch64" -> true;
++            case "x86_64", "i386", "x86", "amd64", "ppc64", "ppc64le", "ppc64be", "aarch64", "loongarch64" -> true;
+             default -> false;
+         };
+     }

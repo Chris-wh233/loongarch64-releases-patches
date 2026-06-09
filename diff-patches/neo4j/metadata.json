@@ -3,21 +3,21 @@
   "ci_repository": "loongarch64-releases/neo4j",
   "upstream_repository": "neo4j/neo4j",
   "architecture": "loongarch64",
-  "latest_generated_version": "5.26.26",
-  "upstream_source_tag": "5.26.26",
+  "latest_generated_version": "5.26.27",
+  "upstream_source_tag": "5.26.27",
   "docker_image": "lcr.loongnix.cn/library/debian:forky",
   "dockerfile": "Dockerfile.base",
   "extra_packages": [],
-  "last_generated_at": "2026-05-28T08:18:49Z",
-  "diff_directory": "diff-patches/neo4j/5.26.26",
+  "last_generated_at": "2026-06-09T06:34:17Z",
+  "diff_directory": "diff-patches/neo4j/5.26.27",
   "diff_files": [
     "neo4j_src.patch"
   ],
   "description": "Captures Neo4j source adaptations applied before Maven packaging.",
   "generated_manifest": {
     "project": "neo4j",
-    "version": "5.26.26",
-    "generated_at": "2026-05-28T08:18:47Z",
+    "version": "5.26.27",
+    "generated_at": "2026-06-09T06:34:17Z",
     "diff_files": [
       "neo4j_src.patch"
     ]
