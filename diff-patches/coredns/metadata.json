@@ -3,21 +3,21 @@
   "ci_repository": "loongarch64-releases/coredns",
   "upstream_repository": "coredns/coredns",
   "architecture": "loongarch64",
-  "latest_generated_version": "1.14.3",
-  "upstream_source_tag": "v1.14.3",
+  "latest_generated_version": "1.14.4",
+  "upstream_source_tag": "v1.14.4",
   "docker_image": "lcr.loongnix.cn/library/debian:forky",
   "dockerfile": "Dockerfile.base",
   "extra_packages": [
     "golang"
   ],
-  "last_generated_at": "2026-05-28T08:16:22Z",
-  "diff_directory": "diff-patches/coredns/1.14.3",
+  "last_generated_at": "2026-06-11T07:14:38Z",
+  "diff_directory": "diff-patches/coredns/1.14.4",
   "diff_files": [],
   "description": "Captures CoreDNS module dependency changes performed by patches/patch.sh.",
   "generated_manifest": {
     "project": "coredns",
-    "version": "1.14.3",
-    "generated_at": "2026-05-28T08:16:21Z",
+    "version": "1.14.4",
+    "generated_at": "2026-06-11T07:14:38Z",
     "diff_files": []
   }
 }
