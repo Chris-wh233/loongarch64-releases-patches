@@ -1,0 +1,8 @@
+{
+  "project": "tailwindcss",
+  "version": "v4.3.1",
+  "generated_at": "2026-06-13T06:38:29Z",
+  "diff_files": [
+    "tailwindcss_src.patch"
+  ]
+}
