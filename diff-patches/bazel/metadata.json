@@ -3,23 +3,23 @@
   "ci_repository": "loongarch64-releases/bazel",
   "upstream_repository": "bazelbuild/bazel",
   "architecture": "loongarch64",
-  "latest_generated_version": "9.1.1",
-  "upstream_source_tag": "9.1.1",
+  "latest_generated_version": "7.6.0",
+  "upstream_source_tag": "7.6.0",
   "docker_image": "lcr.loongnix.cn/library/debian:forky",
   "dockerfile": "Dockerfile.base",
   "extra_packages": [
     "unzip"
   ],
-  "last_generated_at": "2026-06-04T07:05:02Z",
-  "diff_directory": "diff-patches/bazel/9.1.1",
+  "last_generated_at": "2026-06-17T07:35:58Z",
+  "diff_directory": "diff-patches/bazel/7.6.0",
   "diff_files": [
     "bazel_src.patch"
   ],
   "description": "Captures Bazel source adaptations applied by patches/patch.sh before the Bazel build starts.",
   "generated_manifest": {
     "project": "bazel",
-    "version": "9.1.1",
-    "generated_at": "2026-06-04T07:05:02Z",
+    "version": "7.6.0",
+    "generated_at": "2026-06-17T07:35:57Z",
     "diff_files": [
       "bazel_src.patch"
     ]
