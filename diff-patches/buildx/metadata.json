@@ -3,21 +3,21 @@
   "ci_repository": "loongarch64-releases/buildx",
   "upstream_repository": "docker/buildx",
   "architecture": "loongarch64",
-  "latest_generated_version": "v0.34.1",
-  "upstream_source_tag": "v0.34.1",
+  "latest_generated_version": "v0.35.0",
+  "upstream_source_tag": "v0.35.0",
   "docker_image": "lcr.loongnix.cn/library/debian:forky",
   "dockerfile": "Dockerfile.base",
   "extra_packages": [],
-  "last_generated_at": "2026-05-28T08:16:18Z",
-  "diff_directory": "diff-patches/buildx/v0.34.1",
+  "last_generated_at": "2026-06-19T07:36:22Z",
+  "diff_directory": "diff-patches/buildx/v0.35.0",
   "diff_files": [
     "buildx_src.patch"
   ],
   "description": "Captures Docker Buildx source adaptations applied at the beginning of build().",
   "generated_manifest": {
     "project": "buildx",
-    "version": "v0.34.1",
-    "generated_at": "2026-05-28T08:16:17Z",
+    "version": "v0.35.0",
+    "generated_at": "2026-06-19T07:36:21Z",
     "diff_files": [
       "buildx_src.patch"
     ]
