@@ -274,6 +274,19 @@
       "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\"",
       "diff_dir": "${SRCS}/${VERSION}",
       "diff_file": "tailwindcss_src.patch"
+    },
+    {
+      "name": "flink",
+      "ci_repo": "loongarch64-releases/flink",
+      "upstream": "apache/flink",
+      "patched": true,
+      "docker_image": "lcr.loongnix.cn/library/openjdk:17-slim",
+      "diff_notes": "Captures Flink source adaptations applied before ./mvnw.",
+      "extra_packages": [],
+      "patch_baseline": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\"",
+      "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\"",
+      "diff_dir": "${SRCS}/${VERSION}",
+      "diff_file": "flink_src.patch"
     }
   ]
 }
