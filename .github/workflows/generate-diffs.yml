@@ -34,7 +34,8 @@ jobs:
 
       - name: Commit generated diffs
         run: |
-          if git diff --quiet -- diff-patches; then
+          changes="$(git status --porcelain -- diff-patches)"
+          if [ -z "$changes" ]; then
             echo "No diff-patch changes to commit."
             exit 0
           fi
