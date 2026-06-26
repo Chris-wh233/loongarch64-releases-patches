@@ -1,0 +1,8 @@
+{
+  "project": "flink",
+  "version": "release-2.3.0",
+  "generated_at": "2026-06-26T03:41:59Z",
+  "diff_files": [
+    "flink_src.patch"
+  ]
+}

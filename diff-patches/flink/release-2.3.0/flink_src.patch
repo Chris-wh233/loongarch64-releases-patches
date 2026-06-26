@@ -1,0 +1,141 @@
+diff --git a/flink-filesystems/flink-s3-fs-presto/pom.xml b/flink-filesystems/flink-s3-fs-presto/pom.xml
+index e7e3279..32baa05 100644
+--- a/flink-filesystems/flink-s3-fs-presto/pom.xml
++++ b/flink-filesystems/flink-s3-fs-presto/pom.xml
+@@ -116,6 +116,22 @@ under the License.
+ 			<version>${presto.version}</version>
+ 			<optional>${flink.markBundledAsOptional}</optional>
+ 			<exclusions>
++                                <exclusion>
++                                        <groupId>ch.qos.reload4j</groupId>
++                                        <artifactId>reload4j</artifactId>
++                                </exclusion>
++                                <exclusion>
++                                        <groupId>org.slf4j</groupId>
++                                        <artifactId>slf4j-reload4j</artifactId>
++                                </exclusion>
++                                <exclusion>
++                                        <groupId>log4j</groupId>
++                                        <artifactId>log4j</artifactId>
++                                </exclusion>
++                                <exclusion>
++                                        <groupId>org.slf4j</groupId>
++                                        <artifactId>slf4j-log4j12</artifactId>
++                                </exclusion>
+ 				<!-- Exclude AWS dependencies which we provide ourselves (and in more recent versions). -->
+ 				<exclusion>
+ 					<groupId>com.amazonaws</groupId>
+@@ -330,6 +346,24 @@ under the License.
+ 		<dependency>
+ 			<groupId>com.facebook.presto.hadoop</groupId>
+ 			<artifactId>hadoop-apache2</artifactId>
++                        <exclusions>
++                                <exclusion>
++                                        <groupId>ch.qos.reload4j</groupId>
++                                        <artifactId>reload4j</artifactId>
++                                </exclusion>
++                                <exclusion>
++                                        <groupId>org.slf4j</groupId>
++                                        <artifactId>slf4j-reload4j</artifactId>
++                                </exclusion>
++                                <exclusion>
++                                        <groupId>log4j</groupId>
++                                        <artifactId>log4j</artifactId>
++                                </exclusion>
++                                <exclusion>
++                                        <groupId>org.slf4j</groupId>
++                                        <artifactId>slf4j-log4j12</artifactId>
++                                </exclusion>
++                        </exclusions>
+ 			<version>2.7.4-9</version>
+ 			<optional>${flink.markBundledAsOptional}</optional>
+ 		</dependency>
+diff --git a/flink-runtime-web/pom.xml b/flink-runtime-web/pom.xml
+index 6733c16..78da50b 100644
+--- a/flink-runtime-web/pom.xml
++++ b/flink-runtime-web/pom.xml
+@@ -111,6 +111,58 @@ under the License.
+ 	</dependencies>
+ 
+ 	<profiles>
++                <profile>
++                        <id>loongarch64</id>
++                        <build>
++                                <pluginManagement>
++                                        <plugins>
++                                                <plugin>
++                                                        <groupId>com.github.eirslett</groupId>
++                                                        <artifactId>frontend-maven-plugin</artifactId>
++                                                        <configuration>
++                                                                <skip>true</skip>
++                                                        </configuration>
++                                                </plugin>
++                                        </plugins>
++                                </pluginManagement>
++                                <plugins>
++                                        <plugin>
++                                                <groupId>org.codehaus.mojo</groupId>
++                                                <artifactId>exec-maven-plugin</artifactId>
++                                                <version>3.5.0</version>
++                                                <configuration>
++                                                        <workingDirectory>${project.basedir}/web-dashboard</workingDirectory>
++                                                        <executable>npm</executable>
++                                                </configuration>
++                                                <executions>
++                                                        <execution>
++                                                                <id>loongarch64-npm-install</id>
++                                                                <phase>generate-resources</phase>
++                                                                <goals>
++                                                                        <goal>exec</goal>
++                                                                </goals>
++                                                                <configuration>
++                                                                        <commandlineArgs>ci --cache-max=0 --no-save ${npm.proxy}</commandlineArgs>
++                                                                        <environmentVariables>
++                                                                                <HUSKY_SKIP_INSTALL>true</HUSKY_SKIP_INSTALL>
++                                                                        </environmentVariables>
++                                                                </configuration>
++                                                        </execution>
++                                                        <execution>
++                                                                <id>loongarch64-npm-run-ci-check</id>
++                                                                <phase>generate-resources</phase>
++                                                                <goals>
++                                                                        <goal>exec</goal>
++                                                                </goals>
++                                                                <configuration>
++                                                                        <commandlineArgs>run ci-check</commandlineArgs>
++                                                                </configuration>
++                                                        </execution>
++                                                </executions>
++                                        </plugin>
++                                </plugins>
++                        </build>
++                </profile>
+ 		<profile>
+ 			<id>skip-webui-build</id>
+ 			<build>
+diff --git a/pom.xml b/pom.xml
+index a007292..320e975 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -950,6 +950,21 @@ under the License.
+ 	</dependencyManagement>
+ 
+ 	<profiles>
++                <profile>
++                        <id>loongarch64</id>
++                        <repositories>
++                                <repository>
++                                        <id>loongnix-loongarch</id>
++                                        <url>https://maven.loongnix.cn/loongarch/maven</url>
++                                </repository>
++                        </repositories>
++                        <pluginRepositories>
++                                <pluginRepository>
++                                        <id>loongnix-loongarch</id>
++                                        <url>https://maven.loongnix.cn/loongarch/maven</url>
++                                </pluginRepository>
++                        </pluginRepositories>
++                </profile>
+ 		<profile>
+ 			<id>intellij</id>
+ 			<activation>

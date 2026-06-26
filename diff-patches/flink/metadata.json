@@ -1,0 +1,25 @@
+{
+  "project": "flink",
+  "ci_repository": "loongarch64-releases/flink",
+  "upstream_repository": "apache/flink",
+  "architecture": "loongarch64",
+  "latest_generated_version": "release-2.3.0",
+  "upstream_source_tag": "release-2.3.0",
+  "docker_image": "lcr.loongnix.cn/library/debian:forky",
+  "dockerfile": "Dockerfile.base",
+  "extra_packages": [],
+  "last_generated_at": "2026-06-26T03:42:00Z",
+  "diff_directory": "diff-patches/flink/release-2.3.0",
+  "diff_files": [
+    "flink_src.patch"
+  ],
+  "description": "Captures Flink source adaptations applied before ./mvnw.",
+  "generated_manifest": {
+    "project": "flink",
+    "version": "release-2.3.0",
+    "generated_at": "2026-06-26T03:41:59Z",
+    "diff_files": [
+      "flink_src.patch"
+    ]
+  }
+}
