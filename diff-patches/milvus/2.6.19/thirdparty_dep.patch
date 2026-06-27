@@ -1,0 +1,205 @@
+diff --git a/data/boost/1.83.0/_/_/export/conanfile.py b/data/boost/1.83.0/_/_/export/conanfile.py
+index 3237b40..0244717 100644
+--- a/data/boost/1.83.0/_/_/export/conanfile.py
++++ b/data/boost/1.83.0/_/_/export/conanfile.py
+@@ -1059,6 +1059,16 @@ class BoostConan(ConanFile):
+             self.run(command)
+ 
+     def build(self):
++        jamfile = os.path.join(self.source_folder, "src", "libs", "context", "build", "Jamfile.v2")
++        if not os.path.exists(jamfile):
++            jamfile = os.path.join(self.source_folder, "libs", "context", "build", "Jamfile.v2")
++            
++        if os.path.exists(jamfile):
++            replace_in_file(
++                self,
++                jamfile,
++                "else if [ os.platform ] in ARM ARM64 { tmp = aapcs ; }",
++                "else if [ os.platform ] = \"ARM\" { tmp = aapcs ; }\n    else if [ os.platform ] = \"ARM64\" { tmp = aapcs ; }")
+         stacktrace_jamfile = os.path.join(self.source_folder, "libs", "stacktrace", "build", "Jamfile.v2")
+         if cross_building(self, skip_x64_x86=True):
+             # When cross building, do not attempt to run the test-executable (assume they work)
+@@ -1146,7 +1156,7 @@ class BoostConan(ConanFile):
+ 
+     @property
+     def _b2_address_model(self):
+-        if self.settings.arch in ("x86_64", "ppc64", "ppc64le", "mips64", "armv8", "armv8.3", "sparcv9"):
++        if self.settings.arch in ("loongarch64", "x86_64", "ppc64", "ppc64le", "mips64", "armv8", "armv8.3", "sparcv9"):
+             return "64"
+ 
+         return "32"
+diff --git a/data/cmake/3.30.5/_/_.count b/data/cmake/3.30.5/_/_.count
+new file mode 100644
+index 0000000..c227083
+--- /dev/null
++++ b/data/cmake/3.30.5/_/_.count
+@@ -0,0 +1 @@
++0
+\ No newline at end of file
+diff --git a/data/cmake/3.30.5/_/_.count.lock b/data/cmake/3.30.5/_/_.count.lock
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/cmake/3.30.5/_/_/export/conanfile.py b/data/cmake/3.30.5/_/_/export/conanfile.py
+new file mode 100644
+index 0000000..acf7cdb
+--- /dev/null
++++ b/data/cmake/3.30.5/_/_/export/conanfile.py
+@@ -0,0 +1,12 @@
++from conans import ConanFile
++
++class CMakeLoongarch64(ConanFile):
++    name = "cmake"
++    version = "3.30.5" # 欺骗依赖链，匹配版本要求
++    settings = "os", "arch", "compiler", "build_type"
++    description = "Fake CMake package for LoongArch64 to use system binary"
++
++    def package_info(self):
++        self.cpp_info.includedirs = []
++        self.cpp_info.libdirs = []
++        self.output.info("Using system CMake for LoongArch64 adapter")
+diff --git a/data/cmake/3.30.5/_/_/export/conanmanifest.txt b/data/cmake/3.30.5/_/_/export/conanmanifest.txt
+new file mode 100644
+index 0000000..0a0248d
+--- /dev/null
++++ b/data/cmake/3.30.5/_/_/export/conanmanifest.txt
+@@ -0,0 +1,2 @@
++1782540520
++conanfile.py: 9f73b3b356842d25404a8b86942db15c
+diff --git a/data/cmake/3.30.5/_/_/metadata.json b/data/cmake/3.30.5/_/_/metadata.json
+new file mode 100644
+index 0000000..b33dd46
+--- /dev/null
++++ b/data/cmake/3.30.5/_/_/metadata.json
+@@ -0,0 +1 @@
++{"recipe": {"revision": "062e73514efd78582676d3df5d62de2f", "remote": null, "properties": {}, "checksums": {}}, "packages": {}}
+\ No newline at end of file
+diff --git a/data/cmake/3.30.5/_/_/metadata.json.lock b/data/cmake/3.30.5/_/_/metadata.json.lock
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/grpc/1.50.1/milvus/dev/export/conanfile.py b/data/grpc/1.50.1/milvus/dev/export/conanfile.py
+index e8ae71a..6b80e2f 100644
+--- a/data/grpc/1.50.1/milvus/dev/export/conanfile.py
++++ b/data/grpc/1.50.1/milvus/dev/export/conanfile.py
+@@ -107,7 +107,7 @@ class GrpcConan(ConanFile):
+             self.requires("abseil/[>=20240116.1 <20240117.0]", transitive_headers=True)
+         else:
+             self.requires("abseil/[>=20230125.3 <=20230802.1]", transitive_headers=True)
+-            self.requires("protobuf/3.21.12", transitive_headers=True)
++            self.requires("protobuf/3.21.4", transitive_headers=True)
+         self.requires("c-ares/[>=1.19.1 <2]")
+         self.requires("openssl/[>=1.1 <4]")
+         self.requires("re2/20230301")
+diff --git a/data/opentelemetry-cpp/1.8.1.1/milvus/2.4/export/conanfile.py b/data/opentelemetry-cpp/1.8.1.1/milvus/2.4/export/conanfile.py
+index 81c365f..c58b0d7 100644
+--- a/data/opentelemetry-cpp/1.8.1.1/milvus/2.4/export/conanfile.py
++++ b/data/opentelemetry-cpp/1.8.1.1/milvus/2.4/export/conanfile.py
+@@ -275,6 +275,19 @@ class OpenTelemetryCppConan(ConanFile):
+         )
+ 
+         apply_conandata_patches(self)
++        cmake_path = os.path.join(self.source_folder, "CMakeLists.txt")
++        if self.settings.arch == "loongarch64" and os.path.exists(cmake_path):
++            self.output.info("Applying LoongArch surgery to CMakeLists.txt")
++            anchor = "set(ARCH riscv)"
++            insertion = '''\
++    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(loongarch.*|LOONGARCH.*)")
++        set(ARCH loongarch)
++    '''
++            with open(cmake_path, 'r') as f:
++                content = f.read()
++            if 'set(ARCH loongarch)' not in content:
++                if anchor in content:
++                    replace_in_file(self, cmake_path, anchor, anchor + "\n" + insertion)
+ 
+     def build(self):
+         self._patch_sources()
+diff --git a/data/rocksdb/6.29.5/milvus/dev/export/conanfile.py b/data/rocksdb/6.29.5/milvus/dev/export/conanfile.py
+index b10e35f..3c00471 100644
+--- a/data/rocksdb/6.29.5/milvus/dev/export/conanfile.py
++++ b/data/rocksdb/6.29.5/milvus/dev/export/conanfile.py
+@@ -97,7 +97,7 @@ class RocksDB(ConanFile):
+     def validate(self):
+         if self.settings.compiler.get_safe("cppstd"):
+             tools.check_min_cppstd(self, 11)
+-        if self.settings.arch not in ["x86_64", "ppc64le", "ppc64", "mips64", "armv8"]:
++        if self.settings.arch not in ["x86_64", "ppc64le", "ppc64", "mips64", "loongarch64", "armv8"]:
+             raise ConanInvalidConfiguration("Rocksdb requires 64 bits")
+ 
+         if self.settings.os == "Windows" and \
+@@ -176,6 +176,76 @@ class RocksDB(ConanFile):
+     def _patch_sources(self):
+         for patch in self.conan_data.get("patches", {}).get(self.version, []):
+             tools.patch(**patch)
++        if self.settings.arch != "loongarch64":
++            return
++        self.output.info("Patching rocksdb for LoongArch64")
++        
++        source_dir = os.path.join(self.build_folder, "source_subfolder")  
++        # 1. 修改 port/port_posix.h
++        port_file = os.path.join(source_dir, "port", "port_posix.h")
++        if os.path.exists(port_file):
++            tools.replace_in_file(
++                port_file,
++                "#elif defined(__powerpc64__)",
++                "#elif defined(__loongarch64)\n  asm volatile(\"dbar 0\");\n#elif defined(__powerpc64__)"
++            )
++
++        # 2. 修改 util/xxhash.h
++        xxhash_file = os.path.join(source_dir, "util", "xxhash.h")
++        if os.path.exists(xxhash_file):
++            tools.replace_in_file(
++                xxhash_file,
++                'defined(__aarch64__) \\',
++                'defined(__aarch64__) || defined(__loongarch64) \\'
++            )
++
++        # 3. 修改 toku_time.h
++        toku_time_file = os.path.join(
++            source_dir,
++            "utilities", "transactions", "lock", "range", "range_tree",
++            "lib", "portability", "toku_time.h"
++        )
++        if os.path.exists(toku_time_file):
++            tools.replace_in_file(
++                toku_time_file,
++                "#elif defined(__powerpc__)",
++                "#elif defined(__loongarch64)\n  unsigned long result;\n  asm volatile (\"rdtime.d\\t%0,$r0\" : \"=r\" (result));\n  return result;\n#elif defined(__powerpc__)"
++            )
++
++        # 4. 修改 CMakeLists.txt
++        cmake_file = os.path.join(source_dir, "CMakeLists.txt")
++        if os.path.exists(cmake_file):
++            tools.replace_in_file(
++                cmake_file,
++                "include(CheckCCompilerFlag)",
++                "include(CheckCCompilerFlag)\n"
++                "\n"
++                "if(CMAKE_SYSTEM_PROCESSOR MATCHES \"loongarch64\")\n"
++                "  CHECK_C_COMPILER_FLAG(\"-march=loongarch64\" HAS_LOONGARCH64)\n"
++                "  if(HAS_LOONGARCH64)\n"
++                "    set(CMAKE_C_FLAGS \"${CMAKE_C_FLAGS} -march=loongarch64 -mtune=loongarch64\")\n"
++                "    set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -march=loongarch64 -mtune=loongarch64\")\n"
++                "  endif(HAS_LOONGARCH64)\n"
++                "endif(CMAKE_SYSTEM_PROCESSOR MATCHES \"loongarch64\")"
++            )
++
++            tools.replace_in_file(
++                cmake_file,
++                'if(CMAKE_SYSTEM_PROCESSOR MATCHES "^s390x")',
++                '    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^loongarch64")\n'
++                '      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=loongarch64")\n'
++                '    endif()\n'
++                '    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^s390x")'
++            )
++
++        # 5. 修改 Makefile
++        makefile = os.path.join(source_dir, "Makefile")
++        if os.path.exists(makefile):
++            tools.replace_in_file(
++                makefile,
++                "sparc64",
++                "sparc64 loongarch64"
++            )
+ 
+     def build(self):
+         self._patch_sources()
