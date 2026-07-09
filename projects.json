@@ -287,6 +287,60 @@
       "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\"",
       "diff_dir": "${SRCS}/${VERSION}",
       "diff_file": "flink_src.patch"
+    },
+    {
+      "name": "mariadb",
+      "ci_repo": "loongarch64-releases/mariadb",
+      "upstream": "MariaDB/server",
+      "patched": false,
+      "docker_image": "lcr.loongnix.cn/library/debian:forky"
+    },
+    {
+      "name": "dapr",
+      "ci_repo": "loongarch64-releases/dapr",
+      "upstream": "dapr/dapr",
+      "patched": false,
+      "docker_image": "lcr.loongnix.cn/library/golang:1.26"
+    },
+    {
+      "name": "dasel",
+      "ci_repo": "loongarch64-releases/dasel",
+      "upstream": "TomWright/dasel",
+      "patched": false,
+      "docker_image": "lcr.loongnix.cn/library/golang:1.26-alpine"
+    },
+    {
+      "name": "influx-cli",
+      "ci_repo": "loongarch64-releases/influx-cli",
+      "upstream": "influxdata/influx-cli",
+      "patched": false,
+      "docker_image": "lcr.loongnix.cn/library/golang:1.26-alpine"
+    },
+    {
+      "name": "kapacitor",
+      "ci_repo": "loongarch64-releases/influx-cli",
+      "upstream": "influxdata/kapacitor",
+      "patched": true,
+      "docker_image": "lcr.loongnix.cn/library/golang:1.26-alpine",
+      "diff_notes": "Captures Kapacitor source adaptations applied before python3 build.py",
+      "extra_packages": [],
+      "patch_baseline": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\" \"${VERSION}\"",
+      "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\" \"${VERSION}\"",
+      "diff_dir": "${SRCS}/${VERSION}",
+      "diff_file": "kapacitor_src.patch"
+    },
+    {
+      "name": "kong",
+      "ci_repo": "loongarch64-releases/kong",
+      "upstream": "Kong/kong",
+      "patched": true,
+      "docker_image": "lcr.loongnix.cn/library/debian:forky-slim",
+      "diff_notes": "Captures Kong source adaptations applied before bazel build",
+      "extra_packages": [],
+      "patch_baseline": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\" \"${VERSION}\" \"${PATCHES}\"",
+      "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\" \"${VERSION}\" \"${PATCHES}\"",
+      "diff_dir": "${SRCS}/${VERSION}",
+      "diff_file": "kong_src.patch"
     }
   ]
 }
