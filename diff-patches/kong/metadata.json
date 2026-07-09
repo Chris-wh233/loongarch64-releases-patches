@@ -1,0 +1,25 @@
+{
+  "project": "kong",
+  "ci_repository": "loongarch64-releases/kong",
+  "upstream_repository": "Kong/kong",
+  "architecture": "loongarch64",
+  "latest_generated_version": "3.8.1",
+  "upstream_source_tag": "3.8.1",
+  "docker_image": "lcr.loongnix.cn/library/debian:forky",
+  "dockerfile": "Dockerfile.base",
+  "extra_packages": [],
+  "last_generated_at": "2026-07-09T13:03:34Z",
+  "diff_directory": "diff-patches/kong/3.8.1",
+  "diff_files": [
+    "kong_src.patch"
+  ],
+  "description": "Captures Kong source adaptations applied before bazel build",
+  "generated_manifest": {
+    "project": "kong",
+    "version": "3.8.1",
+    "generated_at": "2026-07-09T13:03:34Z",
+    "diff_files": [
+      "kong_src.patch"
+    ]
+  }
+}

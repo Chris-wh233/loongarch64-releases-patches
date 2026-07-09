@@ -1,0 +1,530 @@
+diff --git a/.requirements b/.requirements
+index 8c78d70..e3cad85 100644
+--- a/.requirements
++++ b/.requirements
+@@ -1,9 +1,10 @@
+ KONG_PACKAGE_NAME=kong
++LOONGARCH_LUAJIT2=/tmp/luajit2
+ 
+ OPENRESTY=1.25.3.2
+ OPENRESTY_SHA256=2d564022b06e33b45f7e5cfaf1e5dc571d38d61803af9fa2754dfff353c28d9c
+-LUAROCKS=3.11.1
+-LUAROCKS_SHA256=c3fb3d960dffb2b2fe9de7e3cb004dc4d0b34bb3d342578af84f84325c669102
++LUAROCKS=3.12.2
++LUAROCKS_SHA256=b0e0c85205841ddd7be485f53d6125766d18a81d226588d2366931e9a1484492
+ OPENSSL=3.2.1
+ OPENSSL_SHA256=83c7329fe52c850677d75e5d0b0ca245309b97e8ecbcfdc1dfdc4ab9fac35b39
+ PCRE=10.44
+diff --git a/BUILD.bazel b/BUILD.bazel
+index 20c265c..5dc0c0a 100644
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -336,3 +336,20 @@ selects.config_setting_group(
+     ],
+     visibility = ["//visibility:public"],
+ )
++platform(
++    name = "generic-loongarch64",
++    constraint_values = [
++        "@platforms//os:linux",
++        "@platforms//cpu:loongarch64",
++        "//build/platforms/distro:generic",
++    ],
++)
++
++config_setting(
++    name = "loongarch64-linux",
++    constraint_values = [
++        "@platforms//os:linux",
++        "@platforms//cpu:loongarch64",
++    ],
++    visibility = ["//visibility:public"],
++)
+diff --git a/build/BUILD.bazel b/build/BUILD.bazel
+index 008a71f..8ea59b0 100644
+--- a/build/BUILD.bazel
++++ b/build/BUILD.bazel
+@@ -236,6 +236,8 @@ kong_genrule(
+         "bin/luarocks",
+         "bin/luarocks-admin",
+         "etc/kong/kong.conf.default",
++    ], 
++    out_dirs = [
+         "etc/luarocks",
+         "lib",
+         "share",
+diff --git a/build/build_system.bzl b/build/build_system.bzl
+index 99796a0..e2ea92c 100644
+--- a/build/build_system.bzl
++++ b/build/build_system.bzl
+@@ -10,6 +10,8 @@ def _kong_genrule_impl(ctx):
+     outputs = []
+     for f in ctx.attr.outs:
+         outputs.append(ctx.actions.declare_file(KONG_VAR["BUILD_NAME"] + "/" + f))
++    for f in ctx.attr.out_dirs: 
++        outputs.append(ctx.actions.declare_directory(KONG_VAR["BUILD_NAME"] + "/" + f))
+ 
+     env = dict(KONG_VAR)
+ 
+@@ -33,6 +35,7 @@ kong_genrule = rule(
+         "cmd": attr.string(),
+         "tools": attr.label_list(),
+         "outs": attr.string_list(),
++        "out_dirs": attr.string_list(),
+     },
+ )
+ 
+@@ -295,11 +298,16 @@ def _kong_install_impl(ctx):
+         #         f = output.path,
+         #     ),
+         # )
+-        output = ctx.actions.declare_file(full_path)
++        if file.is_directory: 
++            output = ctx.actions.declare_directory(full_path) 
++            src = file.path + "/." 
++        else: 
++            output = ctx.actions.declare_file(full_path) 
++            src = file.path
+         ctx.actions.run_shell(
+             outputs = [output],
+             inputs = [file],
+-            command = "cp -r %s %s" % (file.path, output.path),
++            command = "cp -r %s %s" % (src, output.path),
+         )
+ 
+         outputs.append(output)
+diff --git a/build/cross_deps/libxcrypt/001-4.4.27-enable-hash-all.patch b/build/cross_deps/libxcrypt/001-4.4.27-enable-hash-all.patch
+new file mode 100644
+index 0000000..1789113
+--- /dev/null
++++ b/build/cross_deps/libxcrypt/001-4.4.27-enable-hash-all.patch
+@@ -0,0 +1,70 @@
++This is roughly adapted from https://patchwork.yoctoproject.org/project/oe-core/patch/20230726131331.2239727-1-Martin.Jansa@gmail.com
++Which is a patch adopted around 4.4.30 upstream.
++
++diff --color -Naur a/build-aux/scripts/BuildCommon.pm b/build-aux/scripts/BuildCommon.pm
++--- a/build-aux/scripts/BuildCommon.pm	2021-12-17 07:16:06.000000000 -0800
+++++ b/build-aux/scripts/BuildCommon.pm	2024-09-05 12:47:53.534533364 -0700
++@@ -519,19 +519,19 @@
++     my $COMPAT_ABI;
++     local $_;
++     for (@args) {
++-        when (/^SYMVER_MIN=(.+)$/) {
+++        if (/^SYMVER_MIN=(.+)$/) {
++             $usage_error->() if defined $SYMVER_MIN;
++             $SYMVER_MIN = $1;
++         }
++-        when (/^SYMVER_FLOOR=(.+)$/) {
+++        elsif (/^SYMVER_FLOOR=(.+)$/) {
++             $usage_error->() if defined $SYMVER_FLOOR;
++             $SYMVER_FLOOR = $1;
++         }
++-        when (/^COMPAT_ABI=(.+)$/) {
+++        elsif (/^COMPAT_ABI=(.+)$/) {
++             $usage_error->() if defined $COMPAT_ABI;
++             $COMPAT_ABI = $1;
++         }
++-        default {
+++        else {
++             $usage_error->() if defined $map_in;
++             $map_in = $_;
++         }
++diff --color -Naur a/build-aux/scripts/gen-crypt-h b/build-aux/scripts/gen-crypt-h
++--- a/build-aux/scripts/gen-crypt-h	2021-12-17 07:16:06.000000000 -0800
+++++ b/build-aux/scripts/gen-crypt-h	2024-09-05 12:48:58.446980478 -0700
++@@ -37,22 +37,20 @@
++     local $_;
++     while (<$fh>) {
++         chomp;
++-        # Yes, 'given $_' is really required here.
++-        given ($_) {
++-            when ('#define HAVE_SYS_CDEFS_H 1') {
++-                $have_sys_cdefs_h = 1;
++-            }
++-            when ('#define HAVE_SYS_CDEFS_BEGIN_END_DECLS 1') {
++-                $have_sys_cdefs_begin_end_decls = 1;
++-            }
++-            when ('#define HAVE_SYS_CDEFS_THROW 1') {
++-                $have_sys_cdefs_throw = 1;
++-            }
++-            when (/^#define PACKAGE_VERSION "((\d+)\.(\d+)\.\d+)"$/) {
++-                $substs{XCRYPT_VERSION_STR}   = $1;
++-                $substs{XCRYPT_VERSION_MAJOR} = $2;
++-                $substs{XCRYPT_VERSION_MINOR} = $3;
++-            }
+++
+++        if ($_ eq '#define HAVE_SYS_CDEFS_H 1') {
+++            $have_sys_cdefs_h = 1;
+++        }
+++        elsif ($_ eq '#define HAVE_SYS_CDEFS_BEGIN_END_DECLS 1') {
+++            $have_sys_cdefs_begin_end_decls = 1;
+++        }
+++        elsif ($_ eq '#define HAVE_SYS_CDEFS_THROW 1') {
+++            $have_sys_cdefs_throw = 1;
+++        }
+++        elsif (/^#define PACKAGE_VERSION "((\d+)\.(\d+)\.\d+)"$/) {
+++            $substs{XCRYPT_VERSION_STR}   = $1;
+++            $substs{XCRYPT_VERSION_MAJOR} = $2;
+++            $substs{XCRYPT_VERSION_MINOR} = $3;
++         }
++     }
++
+diff --git a/build/cross_deps/libxcrypt/BUILD.libxcrypt.bazel b/build/cross_deps/libxcrypt/BUILD.libxcrypt.bazel
+index f1edd9a..4e50fb2 100644
+--- a/build/cross_deps/libxcrypt/BUILD.libxcrypt.bazel
++++ b/build/cross_deps/libxcrypt/BUILD.libxcrypt.bazel
+@@ -33,6 +33,11 @@ configure_make(
+             "--host=x86_64-unknown-linux-gnu",
+         ],
+         "//conditions:default": [],
++    }) + select({ 
++        "@kong//:loongarch64-linux": [ 
++            "--disable-werror", 
++        ], 
++        "//conditions:default": [],
+     }) + select({
+         ":disable-obsolete-api": [
+             "--enable-obsolete-api=no",
+diff --git a/build/cross_deps/libxcrypt/libxcrypt_4.4.27_loongarch64.patch b/build/cross_deps/libxcrypt/libxcrypt_4.4.27_loongarch64.patch
+new file mode 100644
+index 0000000..3823e27
+--- /dev/null
++++ b/build/cross_deps/libxcrypt/libxcrypt_4.4.27_loongarch64.patch
+@@ -0,0 +1,48 @@
++diff --git a/build-aux/m4-autogen/config.guess b/build-aux/m4-autogen/config.guess
++index b33c9e8..9f6c9ec 100755
++--- a/build-aux/m4-autogen/config.guess
+++++ b/build-aux/m4-autogen/config.guess
++@@ -909,6 +909,9 @@ EOF
++     aarch64:Linux:*:*)
++ 	echo "$UNAME_MACHINE"-unknown-linux-"$LIBC"
++ 	exit ;;
+++    loongarch64:Linux:*:*)
+++	echo "$UNAME_MACHINE"-unknown-linux-"$LIBC"
+++	exit ;;
++     aarch64_be:Linux:*:*)
++ 	UNAME_MACHINE=aarch64_be
++ 	echo "$UNAME_MACHINE"-unknown-linux-"$LIBC"
++diff --git a/build-aux/m4-autogen/config.sub b/build-aux/m4-autogen/config.sub
++index b51fb8c..2bbd268 100755
++--- a/build-aux/m4-autogen/config.sub
+++++ b/build-aux/m4-autogen/config.sub
++@@ -1181,6 +1181,7 @@ case $cpu-$vendor in
++ 			| k1om \
++ 			| le32 | le64 \
++ 			| lm32 \
+++			| loongarch64 \
++ 			| m32c | m32r | m32rle \
++ 			| m5200 | m68000 | m680[012346]0 | m68360 | m683?2 | m68k | v70 | w65 \
++ 			| m6811 | m68hc11 | m6812 | m68hc12 | m68hcs12x | nvptx | picochip \
++diff --git a/lib/libcrypt.map.in b/lib/libcrypt.map.in
++index e746a1b..cec70ce 100644
++--- a/lib/libcrypt.map.in
+++++ b/lib/libcrypt.map.in
++@@ -43,4 +43,5 @@ fcrypt			-		GLIBC_2.0
++ %chain GLIBC_2.0 GLIBC_2.2 GLIBC_2.2.1 GLIBC_2.2.2 GLIBC_2.2.5 GLIBC_2.2.6
++ %chain GLIBC_2.3 GLIBC_2.4 GLIBC_2.12 GLIBC_2.16 GLIBC_2.17 GLIBC_2.18
++ %chain GLIBC_2.21 GLIBC_2.27 GLIBC_2.29 GLIBC_2.32 GLIBC_2.33
+++%chain GLIBC_2.36
++ %chain OW_CRYPT_1.0 XCRYPT_2.0 XCRYPT_4.3 XCRYPT_4.4
++diff --git a/lib/libcrypt.minver b/lib/libcrypt.minver
++index 1044493..30d813e 100644
++--- a/lib/libcrypt.minver
+++++ b/lib/libcrypt.minver
++@@ -60,6 +60,7 @@ GLIBC_2.3    kfreebsd.*gnu   i[3-9]86
++ ERROR        kfreebsd.*gnu   .
++ 
++ # Linux with GNU libc
+++GLIBC_2.36   linux.*gnu      loongarch64   __WORDSIZE == 64 && ULONG_MAX != UINT_MAX /* lp64* ABI */
++ GLIBC_2.33   linux.*gnu      riscv32
++ GLIBC_2.32   linux.*gnu      arc
++ GLIBC_2.29   linux.*gnu      csky
+diff --git a/build/cross_deps/libxcrypt/repositories.bzl b/build/cross_deps/libxcrypt/repositories.bzl
+index ec6d450..d8bea75 100644
+--- a/build/cross_deps/libxcrypt/repositories.bzl
++++ b/build/cross_deps/libxcrypt/repositories.bzl
+@@ -12,6 +12,8 @@ def libxcrypt_repositories():
+     # NOTE: do not bump the following version, see build/cross_deps/README.md for detail.
+     http_archive(
+         name = "cross_deps_libxcrypt",
++        patches = ["//build/cross_deps/libxcrypt:libxcrypt_4.4.27_loongarch64.patch", "//build/cross_deps/libxcrypt:001-4.4.27-enable-hash-all.patch"], 
++        patch_args = ["-p1"],
+         url = "https://github.com/besser82/libxcrypt/releases/download/v4.4.27/libxcrypt-4.4.27.tar.xz",
+         sha256 = "500898e80dc0d027ddaadb5637fa2bf1baffb9ccd73cd3ab51d92ef5b8a1f420",
+         strip_prefix = "libxcrypt-4.4.27",
+diff --git a/build/nfpm/repositories.bzl b/build/nfpm/repositories.bzl
+index c92cc9d..6df3316 100644
+--- a/build/nfpm/repositories.bzl
++++ b/build/nfpm/repositories.bzl
+@@ -10,6 +10,10 @@ def _nfpm_release_select_impl(ctx):
+ 
+     os_name = ctx.os.name
+     os_arch = ctx.os.arch
++    nfpm_bin = ctx.os.environ.get("NFPM_BIN", "") 
++    if nfpm_bin: 
++        ctx.symlink(ctx.path(nfpm_bin), "nfpm") 
++        return
+ 
+     if os_arch == "aarch64":
+         os_arch = "arm64"
+@@ -28,6 +32,7 @@ def _nfpm_release_select_impl(ctx):
+ 
+ nfpm_release_select = repository_rule(
+     implementation = _nfpm_release_select_impl,
++    environ = ["NFPM_BIN"],
+     attrs = {
+         "build_file": attr.label(allow_single_file = True),
+         "build_file_content": attr.string(),
+diff --git a/build/nfpm/rules.bzl b/build/nfpm/rules.bzl
+index cb5999b..2117424 100644
+--- a/build/nfpm/rules.bzl
++++ b/build/nfpm/rules.bzl
+@@ -13,6 +13,8 @@ def _nfpm_pkg_impl(ctx):
+         target_arch = "amd64"
+     elif target_cpu == "aarch64" or target_cpu == "arm64":
+         target_arch = "arm64"
++    elif target_cpu == "loongarch64" or target_cpu == "loong64": 
++        target_arch = "loong64"
+     else:
+         fail("Unsupported platform cpu: %s" % target_cpu)
+     env["ARCH"] = target_arch
+diff --git a/build/openresty/BUILD.openresty.bazel b/build/openresty/BUILD.openresty.bazel
+index 700ebe2..f27277d 100644
+--- a/build/openresty/BUILD.openresty.bazel
++++ b/build/openresty/BUILD.openresty.bazel
+@@ -83,7 +83,10 @@ make(
+     data = [
+         ":luajit_xcflags",
+     ],
+-    lib_source = ":luajit_srcs",
++    lib_source = select({ 
++        "@kong//:loongarch64-linux": "@loongarch_luajit2//:all_srcs", 
++        "//conditions:default": ":luajit_srcs", 
++    }),
+     out_binaries = [
+         "luajit",
+     ],
+diff --git a/build/openresty/atc_router/atc_router_repositories.bzl b/build/openresty/atc_router/atc_router_repositories.bzl
+index ce71993..7006817 100644
+--- a/build/openresty/atc_router/atc_router_repositories.bzl
++++ b/build/openresty/atc_router/atc_router_repositories.bzl
+@@ -6,6 +6,8 @@ load("@kong_bindings//:variables.bzl", "KONG_VAR")
+ def atc_router_repositories():
+     git_or_local_repository(
+         name = "atc_router",
++        patches = ["//third_party:atc_router_1.6.2_loongarch64.patch"], 
++        patch_args = ["-p1"],
+         branch = KONG_VAR["ATC_ROUTER"],
+         remote = "https://github.com/Kong/atc-router",
+     )
+diff --git a/build/openresty/repositories.bzl b/build/openresty/repositories.bzl
+index 3b01aa2..3d97833 100644
+--- a/build/openresty/repositories.bzl
++++ b/build/openresty/repositories.bzl
+@@ -38,6 +38,13 @@ def openresty_repositories():
+     brotli_repositories()
+     snappy_repositories()
+ 
++    maybe( 
++        git_or_local_repository, 
++        name = "loongarch_luajit2", 
++        branch = KONG_VAR["LOONGARCH_LUAJIT2"], 
++        remote = "https://github.com/loongson/luajit2", 
++        build_file_content = _NGINX_MODULE_DUMMY_FILE, 
++    )
+     openresty_version = KONG_VAR["OPENRESTY"]
+ 
+     maybe(
+diff --git a/build/package/nfpm.yaml b/build/package/nfpm.yaml
+index 8ab15ea..3377710 100644
+--- a/build/package/nfpm.yaml
++++ b/build/package/nfpm.yaml
+@@ -70,7 +70,6 @@ overrides:
+   deb:
+     depends:
+     - ca-certificates
+-    - libpcre3
+     - perl
+     - libyaml-0-2
+   rpm:
+diff --git a/kong/pdk/nginx.lua b/kong/pdk/nginx.lua
+index f5715e0..403d50f 100644
+--- a/kong/pdk/nginx.lua
++++ b/kong/pdk/nginx.lua
+@@ -12,7 +12,7 @@ local arch = ffi.arch
+ local ngx  = ngx
+ local tonumber = tonumber
+ 
+-if arch == "x64" or arch == "arm64" then
++if arch == "x64" or arch == "arm64" or arch == "loongarch64" then
+   ffi.cdef[[
+     uint64_t *ngx_stat_active;
+     uint64_t *ngx_stat_reading;
+diff --git a/third_party/BUILD.bazel b/third_party/BUILD.bazel
+new file mode 100644
+index 0000000..e69de29
+diff --git a/third_party/atc_router_1.6.2_loongarch64.patch b/third_party/atc_router_1.6.2_loongarch64.patch
+new file mode 100644
+index 0000000..10ee2cc
+--- /dev/null
++++ b/third_party/atc_router_1.6.2_loongarch64.patch
+@@ -0,0 +1,26 @@
++diff --git a/build/deps.bzl b/build/deps.bzl
++index b3878eb..7319775 100644
++--- a/build/deps.bzl
+++++ b/build/deps.bzl
++@@ -17,7 +17,7 @@ def atc_router_dependencies(cargo_home_isolated = True):
++ 
++     rust_register_toolchains(
++         edition = "2021",
++-        extra_target_triples = ["aarch64-unknown-linux-gnu"],
+++        extra_target_triples = ["loongarch64-unknown-linux-gnu", "aarch64-unknown-linux-gnu"],
++     )
++ 
++     rust_repository_set(
++diff --git a/build/repos.bzl b/build/repos.bzl
++index a660bd6..088ba20 100644
++--- a/build/repos.bzl
+++++ b/build/repos.bzl
++@@ -14,6 +14,8 @@ def atc_router_repositories():
++ 
++     http_archive(
++         name = "rules_rust",
+++        patch_args = ["-p1"],
+++        patches = ["@kong//third_party:rules_rust_0.42.1_loongarch64.patch"],
++         integrity = "sha256-JLN47ZcAbx9wEr5Jiib4HduZATGLiDgK7oUi/fvotzU=",
++         urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.42.1/rules_rust-v0.42.1.tar.gz"],
++     )
+diff --git a/third_party/rules_rust_0.42.1_loongarch64.patch b/third_party/rules_rust_0.42.1_loongarch64.patch
+new file mode 100644
+index 0000000..7ee9b29
+--- /dev/null
++++ b/third_party/rules_rust_0.42.1_loongarch64.patch
+@@ -0,0 +1,127 @@
++diff --git a/MODULE.bazel b/MODULE.bazel
++index 4db0a43e1..b1d9d9b1e 100644
++--- a/MODULE.bazel
+++++ b/MODULE.bazel
++@@ -15,7 +15,7 @@ bazel_dep(
++ )
++ bazel_dep(
++     name = "platforms",
++-    version = "0.0.8",
+++    version = "1.1.0",
++ )
++ bazel_dep(
++     name = "rules_cc",
++diff --git a/rust/known_shas.bzl b/rust/known_shas.bzl
++index 0dd3eb41e..959f7969d 100644
++--- a/rust/known_shas.bzl
+++++ b/rust/known_shas.bzl
++@@ -4,6 +4,15 @@ This is a generated file -- see //util:fetch_shas
++ """
++ 
++ FILE_KEY_TO_SHA = {
+++    # LoongArch64 host artifacts for the default Rust 1.77.2 toolchain.
+++    # Values are copied from the official channel-rust-1.77.2.toml manifest.
+++    "cargo-1.77.2-loongarch64-unknown-linux-gnu.tar.xz": "fca324df63156b763a5383df290410305daf888816be3a62b3e8bc5ba5f4cab2",
+++    "clippy-1.77.2-loongarch64-unknown-linux-gnu.tar.xz": "655478a457b71e7bb5cab283e6f9c446cf6bc58919ccc2582ce7c3aa96a83e67",
+++    "llvm-tools-1.77.2-loongarch64-unknown-linux-gnu.tar.xz": "1adab050cb99b0e4e10a270424799f1693726c39ddc7b8502bc11c7460c91ccf",
+++    "rust-1.77.2-loongarch64-unknown-linux-gnu.tar.xz": "422c69fc4fc2f816d2f90617e57faa7d6763b272e88e2ed16133ce3b34bad207",
+++    "rust-std-1.77.2-loongarch64-unknown-linux-gnu.tar.xz": "4701e1aa4012ef3878a6cf85fdda7f3f53fc8e2d9c44bd6e55d042c8446a2197",
+++    "rustc-1.77.2-loongarch64-unknown-linux-gnu.tar.xz": "fa8bc28b6534c4f4382fc4843fed1ef9b63dbfc7b40fb369fef721188b636614",
+++    "rustfmt-1.77.2-loongarch64-unknown-linux-gnu.tar.xz": "113f8fe44779d09d29c3470cc8a34ebc5347051c95d7b14c0a6723f05f6446be",
++     "2018-10-30/cargo-beta-aarch64-unknown-linux-gnu.tar.gz": "9d91fb3ee868421fbf8f4ed62cb7ee843dc6a1e70241331a9441e3ff09f3296d",
++     "2018-10-30/cargo-beta-aarch64-unknown-linux-gnu.tar.xz": "344ff43655bb61a31eb7b13c4120b2676b95bda94a833553932a58e8226f4b27",
++     "2018-10-30/cargo-beta-arm-unknown-linux-gnueabi.tar.gz": "0a606c94eb712e53cabb0a1d7c68412b39a76d774a2b0d1085d81afd2efa09cd",
++diff --git a/rust/platform/platform.bzl b/rust/platform/platform.bzl
++index edaa58691..06b049fcf 100644
++--- a/rust/platform/platform.bzl
+++++ b/rust/platform/platform.bzl
++@@ -14,6 +14,7 @@ _SUPPORTED_CPU_ARCH = [
++     "arm",
++     "armv7",
++     "i686",
+++    "loongarch64",
++     "powerpc",
++     "s390x",
++     "x86_64",
++diff --git a/rust/platform/triple.bzl b/rust/platform/triple.bzl
++index 1d07ce2e9..d5371de56 100644
++--- a/rust/platform/triple.bzl
+++++ b/rust/platform/triple.bzl
++@@ -114,7 +114,7 @@ def get_host_triple(repository_ctx, abi = None):
++     # Detect the host's cpu architecture
++ 
++     supported_architectures = {
++-        "linux": ["aarch64", "x86_64"],
+++        "linux": ["aarch64", "loongarch64", "x86_64"],
++         "macos": ["aarch64", "x86_64"],
++         "windows": ["aarch64", "x86_64"],
++     }
++@@ -122,6 +122,8 @@ def get_host_triple(repository_ctx, abi = None):
++     arch = repository_ctx.os.arch
++     if arch == "amd64":
++         arch = "x86_64"
+++    if arch == "loong64":
+++        arch = "loongarch64"
++ 
++     if "linux" in repository_ctx.os.name:
++         _validate_cpu_architecture(arch, supported_architectures["linux"])
++diff --git a/rust/platform/triple_mappings.bzl b/rust/platform/triple_mappings.bzl
++index f8c595615..659a957ea 100644
++--- a/rust/platform/triple_mappings.bzl
+++++ b/rust/platform/triple_mappings.bzl
++@@ -34,6 +34,7 @@ SUPPORTED_T2_PLATFORM_TRIPLES = [
++     "armv7-unknown-linux-gnueabi",
++     "i686-linux-android",
++     "i686-unknown-freebsd",
+++    "loongarch64-unknown-linux-gnu",
++     "powerpc-unknown-linux-gnu",
++     "riscv32imc-unknown-none-elf",
++     "riscv64gc-unknown-none-elf",
++@@ -66,6 +67,7 @@ _CPU_ARCH_TO_BUILTIN_PLAT_SUFFIX = {
++     "i586": None,
++     "i686": "x86_32",
++     "le32": None,
+++    "loongarch64": "loongarch64",
++     "mips": None,
++     "mipsel": None,
++     "powerpc": "ppc",
++diff --git a/rust/repositories.bzl b/rust/repositories.bzl
++index 8b16a5863..6db3ab4ff 100644
++--- a/rust/repositories.bzl
+++++ b/rust/repositories.bzl
++@@ -39,6 +39,7 @@ DEFAULT_TOOLCHAIN_TRIPLES = {
++     "aarch64-apple-darwin": "rust_darwin_aarch64",
++     "aarch64-pc-windows-msvc": "rust_windows_aarch64",
++     "aarch64-unknown-linux-gnu": "rust_linux_aarch64",
+++    "loongarch64-unknown-linux-gnu": "rust_linux_loongarch64",
++     "x86_64-apple-darwin": "rust_darwin_x86_64",
++     "x86_64-pc-windows-msvc": "rust_windows_x86_64",
++     "x86_64-unknown-freebsd": "rust_freebsd_x86_64",
++@@ -48,14 +49,24 @@ DEFAULT_TOOLCHAIN_TRIPLES = {
++ def rules_rust_dependencies():
++     """Dependencies used in the implementation of `rules_rust`."""
++ 
+++    maybe(
+++        http_archive,
+++        name = "package_metadata",
+++        sha256 = "0e89367f1cb6d93a5a1afea4b55b11ea6b28f63f653b47154153677ca7d4afea",
+++        strip_prefix = "supply-chain-0.0.3/metadata",
+++        urls = [
+++            "https://mirror.bazel.build/github.com/bazel-contrib/supply-chain/releases/download/v0.0.3/supply-chain-v0.0.3.tar.gz",
+++            "https://github.com/bazel-contrib/supply-chain/releases/download/v0.0.3/supply-chain-v0.0.3.tar.gz",
+++        ],
+++    )
++     maybe(
++         http_archive,
++         name = "platforms",
++         urls = [
++-            "https://mirror.bazel.build/github.com/bazelbuild/platforms/releases/download/0.0.8/platforms-0.0.8.tar.gz",
++-            "https://github.com/bazelbuild/platforms/releases/download/0.0.8/platforms-0.0.8.tar.gz",
+++            "https://mirror.bazel.build/github.com/bazelbuild/platforms/releases/download/1.1.0/platforms-1.1.0.tar.gz",
+++            "https://github.com/bazelbuild/platforms/releases/download/1.1.0/platforms-1.1.0.tar.gz",
++         ],
++-        sha256 = "8150406605389ececb6da07cbcb509d5637a3ab9a24bc69b1101531367d89d74",
+++        sha256 = "dbad4a23abcca6171e47b79edc53bd6a41067a3b75f9e8b104656b459ff25046",
++     )
++     maybe(
++         http_archive,

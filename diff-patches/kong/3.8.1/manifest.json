@@ -1,0 +1,8 @@
+{
+  "project": "kong",
+  "version": "3.8.1",
+  "generated_at": "2026-07-09T13:03:34Z",
+  "diff_files": [
+    "kong_src.patch"
+  ]
+}
