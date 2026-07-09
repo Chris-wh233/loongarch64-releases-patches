@@ -1,0 +1,25 @@
+{
+  "project": "kapacitor",
+  "ci_repository": "loongarch64-releases/kapacitor",
+  "upstream_repository": "influxdata/kapacitor",
+  "architecture": "loongarch64",
+  "latest_generated_version": "1.8.5",
+  "upstream_source_tag": "v1.8.5",
+  "docker_image": "lcr.loongnix.cn/library/debian:forky",
+  "dockerfile": "Dockerfile.base",
+  "extra_packages": [],
+  "last_generated_at": "2026-07-09T14:03:42Z",
+  "diff_directory": "diff-patches/kapacitor/1.8.5",
+  "diff_files": [
+    "kapacitor_src.patch"
+  ],
+  "description": "Captures Kapacitor source adaptations applied before python3 build.py",
+  "generated_manifest": {
+    "project": "kapacitor",
+    "version": "1.8.5",
+    "generated_at": "2026-07-09T14:03:41Z",
+    "diff_files": [
+      "kapacitor_src.patch"
+    ]
+  }
+}

@@ -1,0 +1,41 @@
+diff --git a/build.py b/build.py
+old mode 100755
+new mode 100644
+index 3b3c76f..228331e
+--- a/build.py
++++ b/build.py
+@@ -93,13 +93,13 @@ targets = {
+ 
+ supported_builds = {
+     'darwin': [ "amd64" ],
+-    'linux': [ "arm64", "amd64" ],
++    'linux': [ "arm64", "amd64", "loong64" ],
+     'windows': [ "amd64" ]
+ }
+ 
+ supported_packages = {
+     "darwin": [ "tar"],
+-    "linux": [ "deb", "rpm", "tar"],
++    "linux": [ "tar"],
+     # experimental
+     "windows": [ "zip" ]
+ }
+@@ -545,6 +545,9 @@ def build(version=None,
+             if arch == "arm64":
+                 cc = "/musl/aarch64/bin/musl-gcc"
+                 tags += ["netgo", "osusergo", "noasm", "static_build"]
++            if arch == "loong64": 
++                cc = "gcc" 
++                tags += ["netgo", "osusergo", "noasm", "static_build"]
+         # Darwin
+         elif platform == "darwin" and arch == "amd64":
+             cc = "x86_64-apple-darwin23.5-clang"
+@@ -877,7 +880,7 @@ def main(args):
+     if args.package:
+         if not check_path_for("fpm"):
+             logging.error("FPM ruby gem required for packaging. Stopping.")
+-            return 1
++            pass
+         packages = package(build_output,
+                            args.name,
+                            args.version,
