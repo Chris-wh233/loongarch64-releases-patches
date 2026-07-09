@@ -318,7 +318,7 @@
     },
     {
       "name": "kapacitor",
-      "ci_repo": "loongarch64-releases/influx-cli",
+      "ci_repo": "loongarch64-releases/kapacitor",
       "upstream": "influxdata/kapacitor",
       "patched": true,
       "docker_image": "lcr.loongnix.cn/library/golang:1.26-alpine",
