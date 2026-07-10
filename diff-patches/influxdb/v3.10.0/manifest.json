@@ -1,0 +1,8 @@
+{
+  "project": "influxdb",
+  "version": "v3.10.0",
+  "generated_at": "2026-07-10T07:50:48Z",
+  "diff_files": [
+    "influxdb_src.patch"
+  ]
+}
