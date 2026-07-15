@@ -1,0 +1,223 @@
+diff --git a/MODULE.bazel b/MODULE.bazel
+index 2764441..b224aed 100755
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -468,3 +468,23 @@ register_toolchains("@local_config_winsdk//:all")
+ register_toolchains("//tools/res:empty_rc_toolchain")
+ 
+ register_toolchains("@graalvm_ce_toolchains//:gvm")
++single_version_override(
++    module_name = "platforms",
++    patch_strip = 1,
++    patches = ["//third_party:platforms_1.0.0.patch"],
++)
++single_version_override(
++    module_name = "rules_java",
++    patch_strip = 1,
++    patches = ["//third_party:rules_java_9.1.0.patch"],
++)
++single_version_override(
++    module_name = "rules_go",
++    patch_strip = 1,
++    patches = ["//third_party:rules_go_0.59.0.patch"],
++)
++single_version_override(
++    module_name = "rules_cc",
++    patch_strip = 1,
++    patches = ["//third_party:rules_cc_0.2.17.patch"],
++)
+diff --git a/scripts/bootstrap/compile.sh b/scripts/bootstrap/compile.sh
+index e1529cc..f3d981f 100755
+--- a/scripts/bootstrap/compile.sh
++++ b/scripts/bootstrap/compile.sh
+@@ -311,6 +311,7 @@ EOF
+   mv -f ${BAZEL_TOOLS_REPO}/tools/cpp/BUILD.tools ${BAZEL_TOOLS_REPO}/tools/cpp/BUILD
+   link_children "${PWD}" tools/python "${BAZEL_TOOLS_REPO}"
+   link_children "${PWD}" tools "${BAZEL_TOOLS_REPO}"
++  mv -f ${BAZEL_TOOLS_REPO}/tools/BUILD.tools ${BAZEL_TOOLS_REPO}/tools/BUILD
+ 
+   # Set up @maven properly
+   cp derived/maven/BUILD.vendor derived/maven/BUILD
+diff --git a/src/conditions/BUILD b/src/conditions/BUILD
+index 3de0e51..7777aef 100755
+--- a/src/conditions/BUILD
++++ b/src/conditions/BUILD
+@@ -227,3 +227,11 @@ config_setting(
+     },
+     visibility = ["//visibility:public"],
+ )
++config_setting(
++    name = "linux_loongarch64",
++    constraint_values = [
++        "@platforms//os:linux",
++        "@platforms//cpu:loongarch64",
++    ],
++    visibility = ["//visibility:public"],
++)
+diff --git a/src/conditions/BUILD.tools b/src/conditions/BUILD.tools
+index 04fd160..4439594 100755
+--- a/src/conditions/BUILD.tools
++++ b/src/conditions/BUILD.tools
+@@ -179,3 +179,11 @@ config_setting(
+     },
+     visibility = ["//visibility:public"],
+ )
++config_setting(
++    name = "linux_loongarch64",
++    constraint_values = [
++        "@platforms//os:linux",
++        "@platforms//cpu:loongarch64",
++    ],
++    visibility = ["//visibility:public"],
++)
+diff --git a/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java b/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java
+index 6581fad..3cef313 100755
+--- a/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java
++++ b/src/main/java/com/google/devtools/build/lib/analysis/config/AutoCpuConverter.java
+@@ -56,6 +56,7 @@ public class AutoCpuConverter extends Converter.Contextless<String> {
+               case S390X -> "s390x";
+               case MIPS64 -> "mips64";
+               case RISCV64 -> "riscv64";
++              case LOONGARCH64 -> "loongarch64";
+               default -> "unknown";
+             };
+         default -> "unknown";
+diff --git a/src/main/java/com/google/devtools/build/lib/util/CPU.java b/src/main/java/com/google/devtools/build/lib/util/CPU.java
+index 88ae4a3..87f7dde 100755
+--- a/src/main/java/com/google/devtools/build/lib/util/CPU.java
++++ b/src/main/java/com/google/devtools/build/lib/util/CPU.java
+@@ -29,6 +29,7 @@ public enum CPU {
+   S390X("s390x", ImmutableSet.of("s390x", "s390")),
+   MIPS64("mips64", ImmutableSet.of("mips64el", "mips64")),
+   RISCV64("riscv64", ImmutableSet.of("riscv64")),
++  LOONGARCH64("loongarch64", ImmutableSet.of("loong64", "loongarch64")),
+   UNKNOWN("unknown", ImmutableSet.<String>of());
+ 
+   private final String canonicalName;
+diff --git a/third_party/platforms_1.0.0.patch b/third_party/platforms_1.0.0.patch
+new file mode 100644
+index 0000000..d49aa1d
+--- /dev/null
++++ b/third_party/platforms_1.0.0.patch
+@@ -0,0 +1,29 @@
++diff --git a/cpu/BUILD b/cpu/BUILD
++index 6497452..5eb70fc 100644
++--- a/cpu/BUILD
+++++ b/cpu/BUILD
++@@ -188,3 +188,11 @@ constraint_value(
++     name = "riscv64",
++     constraint_setting = ":cpu",
++ )
+++alias(
+++    name = "loong64",
+++    actual = ":loongarch64",
+++)
+++constraint_value(
+++    name = "loongarch64",
+++    constraint_setting = ":cpu",
+++)
++diff --git a/host/extension.bzl b/host/extension.bzl
++index 69410cd..49cd45e 100644
++--- a/host/extension.bzl
+++++ b/host/extension.bzl
++@@ -17,6 +17,8 @@ def _translate_cpu(arch):
++         return "mips64"
++     if arch in ["riscv64"]:
++         return "riscv64"
+++    if arch in ["loongarch64"]:
+++        return "loongarch64"
++     return None
++ 
++ def _translate_os(os):
+diff --git a/third_party/rules_cc_0.2.17.patch b/third_party/rules_cc_0.2.17.patch
+new file mode 100644
+index 0000000..28fa5d2
+--- /dev/null
++++ b/third_party/rules_cc_0.2.17.patch
+@@ -0,0 +1,13 @@
++diff --git a/cc/private/toolchain/lib_cc_configure.bzl b/cc/private/toolchain/lib_cc_configure.bzl
++index 975dd44..81bf64a 100644
++--- a/cc/private/toolchain/lib_cc_configure.bzl
+++++ b/cc/private/toolchain/lib_cc_configure.bzl
++@@ -253,6 +253,8 @@ def get_cpu_value(repository_ctx):
++         return "mips64"
++     if arch in ["riscv64"]:
++         return "riscv64"
+++    if arch in ["loong64", "loongarch64"]:
+++        return "loongarch64"
++     if arch in ["arm", "armv7l"]:
++         return "arm"
++     if arch in ["aarch64"]:
+diff --git a/third_party/rules_go_0.59.0.patch b/third_party/rules_go_0.59.0.patch
+new file mode 100644
+index 0000000..0ee2020
+--- /dev/null
++++ b/third_party/rules_go_0.59.0.patch
+@@ -0,0 +1,41 @@
++diff --git a/go/private/platforms.bzl b/go/private/platforms.bzl
++index c3009b2..d490875 100644
++--- a/go/private/platforms.bzl
+++++ b/go/private/platforms.bzl
++@@ -27,6 +27,7 @@ BAZEL_GOOS_CONSTRAINTS = {
++ }
++ 
++ BAZEL_GOARCH_CONSTRAINTS = {
+++    "loong64": "@platforms//cpu:loongarch64",
++     "386": "@platforms//cpu:x86_32",
++     "amd64": "@platforms//cpu:x86_64",
++     "arm": "@platforms//cpu:armv7",
++@@ -67,6 +68,7 @@ GOOS_GOARCH = (
++     ("linux", "ppc64"),
++     ("linux", "ppc64le"),
++     ("linux", "riscv64"),
+++    ("linux", "loong64"),
++     ("linux", "s390x"),
++     ("nacl", "386"),
++     ("nacl", "amd64p32"),
++@@ -135,6 +137,7 @@ CGO_GOOS_GOARCH = {
++     ("linux", "mipsle"): None,
++     ("linux", "ppc64le"): None,
++     ("linux", "riscv64"): None,
+++    ("linux", "loong64"): None,
++     ("linux", "s390x"): None,
++     ("linux", "sparc64"): None,
++     ("netbsd", "386"): None,
++diff --git a/go/private/sdk.bzl b/go/private/sdk.bzl
++index cda5d42..1a34329 100644
++--- a/go/private/sdk.bzl
+++++ b/go/private/sdk.bzl
++@@ -474,6 +474,8 @@ def detect_host_platform(ctx):
++         goarch = "arm64"
++     elif goarch == "x86_64":
++         goarch = "amd64"
+++    elif goarch == "loongarch64":
+++        goarch = "loong64"
++ 
++     return goos, goarch
++ 
+diff --git a/third_party/rules_java_9.1.0.patch b/third_party/rules_java_9.1.0.patch
+new file mode 100644
+index 0000000..a7fcf49
+--- /dev/null
++++ b/third_party/rules_java_9.1.0.patch
+@@ -0,0 +1,20 @@
++diff --git a/toolchains/BUILD b/toolchains/BUILD
++index 0f3ef2b..dcd8af8 100644
++--- a/toolchains/BUILD
+++++ b/toolchains/BUILD
++@@ -144,6 +144,7 @@ cc_library(
++         "@bazel_tools//src/conditions:linux_mips64": [":jni_md_header-linux"],
++         "@bazel_tools//src/conditions:linux_ppc64le": [":jni_md_header-linux"],
++         "@bazel_tools//src/conditions:linux_riscv64": [":jni_md_header-linux"],
+++        "@bazel_tools//src/conditions:linux_loongarch64": [":jni_md_header-linux"],
++         "@bazel_tools//src/conditions:linux_s390x": [":jni_md_header-linux"],
++         "@bazel_tools//src/conditions:linux_x86_64": [":jni_md_header-linux"],
++         "@bazel_tools//src/conditions:openbsd": [":jni_md_header-openbsd"],
++@@ -154,6 +155,7 @@ cc_library(
++         "@bazel_tools//src/conditions:darwin": ["include/darwin"],
++         "@bazel_tools//src/conditions:freebsd": ["include/freebsd"],
++         "@bazel_tools//src/conditions:linux_aarch64": ["include/linux"],
+++        "@bazel_tools//src/conditions:linux_loongarch64": ["include/linux"],
++         "@bazel_tools//src/conditions:linux_mips64": ["include/linux"],
++         "@bazel_tools//src/conditions:linux_ppc64le": ["include/linux"],
++         "@bazel_tools//src/conditions:linux_riscv64": ["include/linux"],

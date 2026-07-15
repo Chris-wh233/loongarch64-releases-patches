@@ -1,0 +1,8 @@
+{
+  "project": "bazel",
+  "version": "9.2.0",
+  "generated_at": "2026-07-15T05:17:31Z",
+  "diff_files": [
+    "bazel_src.patch"
+  ]
+}
