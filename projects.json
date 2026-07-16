@@ -101,42 +101,9 @@
       "patched": true,
       "docker_image": "lcr.loongnix.cn/library/erlang:${EL_VERSION}-slim",
       "extra_args_strategy": "emqx_el_version",
-      "diff_notes": "Runs EMQX dependency retrieval first, then captures dependency and source adaptations before compilation.",
-      "extra_packages": [
-        "autoconf",
-        "automake",
-        "bison",
-        "build-essential",
-        "cargo",
-        "cmake",
-        "curl",
-        "debhelper",
-        "elixir",
-        "erlang",
-        "flex",
-        "gcc",
-        "g++",
-        "libffi-dev",
-        "libkrb5-dev",
-        "libncurses5-dev",
-        "libsasl2-dev",
-        "libssl-dev",
-        "libtool",
-        "make",
-        "perl",
-        "procps",
-        "protobuf-compiler",
-        "python3",
-        "unzip",
-        "unixodbc-dev",
-        "zip",
-        "zlib1g-dev"
-      ],
-      "skip_build": true,
-      "patch_baseline": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\" \"${VERSION}\"",
-      "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\" \"${VERSION}\"",
-      "diff_dir": "${SRCS}/${VERSION}",
-      "diff_file": "emqx_src.patch"
+      "diff_notes": "src does not require patches",
+      "extra_packages": [],
+      "skip_build": true
     },
     {
       "name": "jruby",
@@ -172,10 +139,8 @@
       "upstream": "elastic/logstash",
       "patched": true,
       "docker_image": "lcr.loongnix.cn/openeuler/openeuler:24.03-LTS-SP2",
-      "diff_notes": "Captures Logstash source adaptations in the extracted upstream source directory.",
-      "extra_packages": [
-        "default-jdk"
-      ],
+      "diff_notes": "the patch behavior is to replace jdk",
+      "extra_packages": [],
       "skip_build": true
     },
     {
@@ -244,15 +209,8 @@
       "upstream": "vercel/next.js",
       "patched": true,
       "docker_image": "lcr.loongnix.cn/library/alpine:3.23.0",
-      "diff_notes": "Captures Next.js source adaptations and the Cargo registry cty LoongArch64 target addition.",
-      "extra_packages": [
-        "cargo",
-        "gcc",
-        "g++",
-        "make",
-        "pkg-config",
-        "rustc"
-      ],
+      "diff_notes": "no need to generate patch",
+      "extra_packages": [],
       "skip_build": true
     },
     {
@@ -354,6 +312,23 @@
       "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\" \"${VERSION}\" \"${PATCHES}\"",
       "diff_dir": "${SRCS}/${VERSION}",
       "diff_file": "influxdb_src.patch"
+    },
+    {
+      "name": "rolldown",
+      "ci_repo": "loongarch64-releases/rolldown",
+      "upstream": "rolldown/rolldown",
+      "patched": false,
+      "docker_image": "lcr.loongnix.cn/library/rust:1.97.0-forky-slim"
+    },
+    {
+      "name": "pyroscope",
+      "ci_repo": "loongarch64-releases/pyroscope",
+      "upstream": "grafana/pyroscope",
+      "patched": true,
+      "docker_image": "lcr.loongnix.cn/library/golang:1.26",
+      "diff_notes": "no need to generate patch",
+      "extra_packages": [],
+      "skip_build": true
     }
   ]
 }
