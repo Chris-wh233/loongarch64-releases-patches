@@ -226,12 +226,9 @@
       "upstream": "tailwindlabs/tailwindcss",
       "patched": true,
       "docker_image": "lcr.loongnix.cn/library/rust:1.95.0-alpine3.22",
-      "diff_notes": "Captures Tailwind CSS source adaptations applied before the Rust build.",
+      "diff_notes": "no need to generate patch",
       "extra_packages": [],
-      "patch_baseline": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\"",
-      "patch_anchor": "\"${PATCHES}/patch.sh\" \"${SRCS}/${VERSION}\"",
-      "diff_dir": "${SRCS}/${VERSION}",
-      "diff_file": "tailwindcss_src.patch"
+      "skip_build": true
     },
     {
       "name": "flink",
