@@ -3,23 +3,23 @@
   "ci_repository": "loongarch64-releases/elasticsearch",
   "upstream_repository": "elastic/elasticsearch",
   "architecture": "loongarch64",
-  "latest_generated_version": "9.4.3",
-  "upstream_source_tag": "v9.4.3",
+  "latest_generated_version": "9.4.4",
+  "upstream_source_tag": "v9.4.4",
   "docker_image": "lcr.loongnix.cn/library/debian:forky",
   "dockerfile": "Dockerfile.base",
   "extra_packages": [
     "perl"
   ],
-  "last_generated_at": "2026-07-01T06:53:30Z",
-  "diff_directory": "diff-patches/elasticsearch/9.4.3",
+  "last_generated_at": "2026-07-23T05:41:19Z",
+  "diff_directory": "diff-patches/elasticsearch/9.4.4",
   "diff_files": [
     "elasticsearch_src.patch"
   ],
   "description": "Captures Elasticsearch source and helper-file adaptations applied by patches/patch.sh.",
   "generated_manifest": {
     "project": "elasticsearch",
-    "version": "9.4.3",
-    "generated_at": "2026-07-01T06:53:29Z",
+    "version": "9.4.4",
+    "generated_at": "2026-07-23T05:41:18Z",
     "diff_files": [
       "elasticsearch_src.patch"
     ]
