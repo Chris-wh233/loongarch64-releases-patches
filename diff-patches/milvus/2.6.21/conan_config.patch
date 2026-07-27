@@ -1,0 +1,67 @@
+diff --git a/conan.conf b/conan.conf
+index 4398e66..8db631e 100644
+--- a/conan.conf
++++ b/conan.conf
+@@ -19,4 +19,5 @@ path = ./data
+ 
+ [hooks]
+ attribute_checker
++loongarch_hook
+ 
+diff --git a/hooks/loongarch_hook.py b/hooks/loongarch_hook.py
+new file mode 100644
+index 0000000..62f0bf5
+--- /dev/null
++++ b/hooks/loongarch_hook.py
+@@ -0,0 +1,14 @@
++import os
++import shutil
++
++def pre_build(output, conanfile, **kwargs):
++    source_folder = getattr(conanfile, "source_folder", None)
++    if source_folder and os.path.exists(source_folder):
++        output.info(f"LoongArch Fix: Patching config.guess for {conanfile.name}")
++        for root, dirs, files in os.walk(source_folder):
++            for f in files:
++                if f in ("config.guess", "config.sub"):
++                    target = os.path.join(root, f)
++                    patch_src = os.path.join("/usr/share/libtool/build-aux", f)
++                    if os.path.exists(patch_src):
++                        shutil.copy(patch_src, target)
+diff --git a/profiles/loongarch b/profiles/loongarch
+new file mode 100644
+index 0000000..086cd55
+--- /dev/null
++++ b/profiles/loongarch
+@@ -0,0 +1,9 @@
++[settings]
++os=Linux
++os_build=Linux
++arch=loongarch64
++arch_build=loongarch64
++build_type=Release
++[options]
++[build_requires]
++[env]
+diff --git a/settings.yml b/settings.yml
+index e7ab414..dc5004c 100644
+--- a/settings.yml
++++ b/settings.yml
+@@ -1,7 +1,7 @@
+ 
+ # Only for cross building, 'os_build/arch_build' is the system that runs Conan
+ os_build: [Windows, WindowsStore, Linux, Macos, FreeBSD, SunOS, AIX, VxWorks]
+-arch_build: [x86, x86_64, ppc32be, ppc32, ppc64le, ppc64, armv5el, armv5hf, armv6, armv7, armv7hf, armv7s, armv7k, armv8, armv8_32, armv8.3, sparc, sparcv9, mips, mips64, avr, s390, s390x, sh4le, e2k-v2, e2k-v3, e2k-v4, e2k-v5, e2k-v6, e2k-v7]
++arch_build: [loongarch64, x86, x86_64, ppc32be, ppc32, ppc64le, ppc64, armv5el, armv5hf, armv6, armv7, armv7hf, armv7s, armv7k, armv8, armv8_32, armv8.3, sparc, sparcv9, mips, mips64, avr, s390, s390x, sh4le, e2k-v2, e2k-v3, e2k-v4, e2k-v5, e2k-v6, e2k-v7]
+ 
+ # Only for building cross compilation tools, 'os_target/arch_target' is the system for
+ # which the tools generate code
+@@ -66,7 +66,7 @@ os:
+     baremetal:
+     VxWorks:
+         version: ["7"]
+-arch: [x86, x86_64, ppc32be, ppc32, ppc64le, ppc64, armv4, armv4i, armv5el, armv5hf, armv6, armv7, armv7hf, armv7s, armv7k, armv8, armv8_32, armv8.3, sparc, sparcv9, mips, mips64, avr, s390, s390x, asm.js, wasm, sh4le, e2k-v2, e2k-v3, e2k-v4, e2k-v5, e2k-v6, e2k-v7, xtensalx6, xtensalx106, xtensalx7]
++arch: [loongarch64, x86, x86_64, ppc32be, ppc32, ppc64le, ppc64, armv4, armv4i, armv5el, armv5hf, armv6, armv7, armv7hf, armv7s, armv7k, armv8, armv8_32, armv8.3, sparc, sparcv9, mips, mips64, avr, s390, s390x, asm.js, wasm, sh4le, e2k-v2, e2k-v3, e2k-v4, e2k-v5, e2k-v6, e2k-v7, xtensalx6, xtensalx106, xtensalx7]
+ compiler:
+     sun-cc:
+         version: ["5.10", "5.11", "5.12", "5.13", "5.14", "5.15"]
