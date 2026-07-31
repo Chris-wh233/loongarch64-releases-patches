@@ -3,21 +3,21 @@
   "ci_repository": "loongarch64-releases/influxdb",
   "upstream_repository": "influxdata/influxdb",
   "architecture": "loongarch64",
-  "latest_generated_version": "v3.10.5",
-  "upstream_source_tag": "v3.10.5",
+  "latest_generated_version": "v3.11.0",
+  "upstream_source_tag": "v3.11.0",
   "docker_image": "lcr.loongnix.cn/library/debian:forky",
   "dockerfile": "Dockerfile.base",
   "extra_packages": [],
-  "last_generated_at": "2026-07-23T05:42:09Z",
-  "diff_directory": "diff-patches/influxdb/v3.10.5",
+  "last_generated_at": "2026-07-31T05:52:24Z",
+  "diff_directory": "diff-patches/influxdb/v3.11.0",
   "diff_files": [
     "influxdb_src.patch"
   ],
   "description": "Captures Influxdb source adaptations applied before cargo build",
   "generated_manifest": {
     "project": "influxdb",
-    "version": "v3.10.5",
-    "generated_at": "2026-07-23T05:42:08Z",
+    "version": "v3.11.0",
+    "generated_at": "2026-07-31T05:52:23Z",
     "diff_files": [
       "influxdb_src.patch"
     ]
