@@ -1,0 +1,8 @@
+{
+  "project": "neo4j",
+  "version": "5.26.29",
+  "generated_at": "2026-08-05T05:33:05Z",
+  "diff_files": [
+    "neo4j_src.patch"
+  ]
+}

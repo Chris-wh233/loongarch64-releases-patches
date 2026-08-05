@@ -1,0 +1,8 @@
+{
+  "project": "buildx",
+  "version": "v0.36.1",
+  "generated_at": "2026-08-05T05:30:58Z",
+  "diff_files": [
+    "buildx_src.patch"
+  ]
+}
