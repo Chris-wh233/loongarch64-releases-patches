@@ -168,7 +168,7 @@
       "patch_anchor_1": "\"${PATCHES}/${CONAN}/dep_patch.sh\" \"${SRCS}/${VERSION}\" \"${PATCHES}\"",
       "diff_dir_1": "${SRCS}/${VERSION}",
       "diff_file_1": "milvus_src.patch",
-      "patch_baseline_2": "# conanfile for loongarch",
+      "patch_baseline_2": "conan remote add default-conan-local2",
       "patch_anchor_2": "\"${PATCHES}/${CONAN}/conan_patch.sh\" \"${SRCS}/${VERSION}\" \"${PATCHES}\"",
       "diff_dir_2": "$HOME/.conan2",
       "diff_file_2": "conan_config.patch",
