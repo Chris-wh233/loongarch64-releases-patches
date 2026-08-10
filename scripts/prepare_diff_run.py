@@ -97,10 +97,11 @@ def diff_groups(project: dict) -> list[dict]:
 
 
 def shell_files(repo_root: Path) -> list[Path]:
-    files = [repo_root / "scripts" / "build.sh"]
+    build_sh = repo_root / "scripts" / "build.sh"
+    files = [build_sh]
     for directory in (repo_root / "scripts", repo_root / "patches"):
         if directory.exists():
-            files.extend(sorted(path for path in directory.glob("*.sh") if path not in files))
+            files.extend(sorted(path for path in directory.rglob("*.sh") if path != build_sh))
     return [path for path in files if path.exists()]
 
 
