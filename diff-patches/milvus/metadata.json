@@ -14,7 +14,7 @@
     "python3-venv",
     "pip:conan>2"
   ],
-  "last_generated_at": "2026-08-10T09:47:47Z",
+  "last_generated_at": "2026-08-11T12:21:00Z",
   "diff_directory": "diff-patches/milvus/3.0.0",
   "diff_files": [
     "milvus_src.patch"
@@ -23,7 +23,7 @@
   "generated_manifest": {
     "project": "milvus",
     "version": "3.0.0",
-    "generated_at": "2026-08-10T09:47:47Z",
+    "generated_at": "2026-08-11T12:20:59Z",
     "diff_files": [
       "milvus_src.patch"
     ]
