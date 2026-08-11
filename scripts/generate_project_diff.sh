@@ -84,26 +84,6 @@ import sys
 project = json.loads(sys.argv[1])
 version = sys.argv[2]
 
-if project.get("extra_args_strategy") == "emqx_el_version":
-    clear = version.lstrip("ve")
-    parts = clear.split(".")
-    major = int(parts[0])
-    minor = int(parts[1]) if len(parts) > 1 else 0
-    ver_num = major * 1000 + minor
-    if ver_num >= 5009:
-        print("27")
-    elif ver_num >= 5004:
-        print("26")
-    elif ver_num >= 5000:
-        print("25")
-    else:
-        print("24")
-else:
-    for arg in project.get("extra_args", []):
-        print(arg)
-PY
-)
-
 docker run --rm \
   --platform linux/loong64 \
   -v "${run_dir}:/src:z" \
