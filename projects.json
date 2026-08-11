@@ -172,7 +172,7 @@
       "patch_anchor_2": "\"${PATCHES}/${CONAN}/conan_patch.sh\" \"${SRCS}/${VERSION}\" \"${PATCHES}\"",
       "diff_dir_2": "$HOME/.conan2",
       "diff_file_2": "conan_config.patch",
-      "patch_baseline_3": "echo \"pathing conanfile...\"",
+      "patch_baseline_3": "dep_list_from_conan+=(\"b2\")",
       "patch_anchor_3": "\"${PATCHES}/${CONAN}/dep_patch.sh\" \"${SRCS}/${VERSION}\" \"${PATCHES}\"",
       "diff_dir_3": "$HOME/.conan2",
       "diff_file_3": "thirdparty_dep.patch"
