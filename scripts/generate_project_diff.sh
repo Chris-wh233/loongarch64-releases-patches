@@ -84,6 +84,9 @@ import sys
 project = json.loads(sys.argv[1])
 version = sys.argv[2]
 
+PY
+)
+
 docker run --rm \
   --platform linux/loong64 \
   -v "${run_dir}:/src:z" \
