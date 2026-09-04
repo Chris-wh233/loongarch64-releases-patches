@@ -1,0 +1,8 @@
+{
+  "project": "ml-cpp",
+  "version": "v9.5.3",
+  "generated_at": "2026-09-04T07:21:44Z",
+  "diff_files": [
+    "ml_cpp_src.patch"
+  ]
+}
