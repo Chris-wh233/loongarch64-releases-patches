@@ -1,0 +1,189 @@
+diff --git a/.circleci/scripts/fetch-python-standalone.bash b/.circleci/scripts/fetch-python-standalone.bash
+index 361734c..096b871 100755
+--- a/.circleci/scripts/fetch-python-standalone.bash
++++ b/.circleci/scripts/fetch-python-standalone.bash
+@@ -50,7 +50,7 @@ readonly PBS_TOP_DIR="/tmp/workspace"
+ # - https://github.com/astral-sh/python-build-standalone/blob/main/docs/running.rst
+ # - https://edu.chainguard.dev/chainguard/chainguard-images/about/images-compiled-programs/glibc-vs-musl/#python-builds
+ # - https://pythonspeed.com/articles/alpine-docker-python/
+-readonly TARGETS="${TARGETS:-aarch64-apple-darwin aarch64-unknown-linux-gnu x86_64-unknown-linux-gnu x86_64-pc-windows-msvc}"
++readonly TARGETS=loongarch64-unknown-linux-gnu
+ 
+ fetch() {
+     target="$1"
+@@ -60,7 +60,7 @@ fetch() {
+     # .sha256 files
+     if [ ! -e "${DOWNLOAD_DIR}/SHA256SUMS" ]; then
+         echo "Downloading SHA256SUMS"
+-        curl --proto '=https' --tlsv1.2 -sS -L "https://github.com/astral-sh/python-build-standalone/releases/download/${PBS_DATE}/SHA256SUMS" -o "${DOWNLOAD_DIR}/SHA256SUMS"
++        curl --proto '=https' --tlsv1.2 -sS -L "https://github.com/Loongson-Cloud-Community/python-build-standalone/releases/download/${PBS_DATE}/SHA256SUMS" -o "${DOWNLOAD_DIR}/SHA256SUMS"
+         echo
+     fi
+ 
+@@ -72,7 +72,7 @@ fetch() {
+         fi
+     fi
+     binary="cpython-${PBS_VERSION}+${PBS_DATE}-${target}-${suffix}"
+-    url="https://github.com/astral-sh/python-build-standalone/releases/download/${PBS_DATE}/${binary}"
++    url="https://github.com/Loongson-Cloud-Community/python-build-standalone/releases/download/${PBS_DATE}/${binary}"
+ 
+     echo "Downloading ${binary}"
+     curl --proto '=https' --tlsv1.2 -sS -L "$url" -o "${DOWNLOAD_DIR}/${binary}"
+diff --git a/core/iox_query/Cargo.toml b/core/iox_query/Cargo.toml
+index 85e0c9b..4c9d691 100644
+--- a/core/iox_query/Cargo.toml
++++ b/core/iox_query/Cargo.toml
+@@ -26,8 +26,8 @@ chrono = { version = "0.4", default-features = false }
+ data_types = { path = "../data_types" }
+ datafusion = { workspace = true }
+ datafusion_util = { path = "../datafusion_util" }
+-datafusion-udf-wasm-host = { workspace = true }
+-datafusion-udf-wasm-query = { workspace = true }
++datafusion-udf-wasm-host = { workspace = true, optional = true }
++datafusion-udf-wasm-query = { workspace = true, optional = true }
+ executor = { path = "../executor" }
+ futures = "0.3"
+ hashbrown = { workspace = true }
+@@ -35,7 +35,7 @@ indexmap = { version = "2.14", features = ["std"] }
+ influxdb-line-protocol = { path = "../influxdb_line_protocol" }
+ itertools = "0.13.0"
+ iox_query_params = { path = "../iox_query_params" }
+-iox_query_udf = { path = "../iox_query_udf" }
++iox_query_udf = { path = "../iox_query_udf", optional = true }
+ iox_time = { path = "../iox_time" }
+ influxdb_iox_client = { path = "../influxdb_iox_client" }
+ jemalloc_stats = { path = "../jemalloc_stats" }
+@@ -55,6 +55,11 @@ tracker = { path = "../tracker" }
+ uuid = { version = "1", features = ["v4"] }
+ 
+ [features]
++python-udf = [
++  "dep:datafusion-udf-wasm-host",
++  "dep:datafusion-udf-wasm-query",
++  "dep:iox_query_udf",
++]
+ v3 = ["schema/v3"]
+ 
+ [dev-dependencies] # In alphabetical order
+diff --git a/core/iox_query/src/config.rs b/core/iox_query/src/config.rs
+index 375f6a9..1451970 100644
+--- a/core/iox_query/src/config.rs
++++ b/core/iox_query/src/config.rs
+@@ -1,10 +1,13 @@
+-use std::{borrow::Cow, str::FromStr, time::Duration};
++use std::{str::FromStr, time::Duration};
++#[cfg(feature = "python-udf")]
++use std::borrow::Cow;
+ 
+ use datafusion::{
+     common::{Result, extensions_options},
+     config::{ConfigExtension, ConfigField, Visit},
+     error::DataFusionError,
+ };
++#[cfg(feature = "python-udf")]
+ use datafusion_udf_wasm_host::HttpRequestMatcher;
+ 
+ /// IOx-specific config extension prefix.
+@@ -242,14 +245,33 @@ impl ConfigField for MetadataCutoff {
+ ///     ]),
+ /// );
+ /// ```
++#[cfg(feature = "python-udf")]
+ #[derive(Debug, Default, Clone, PartialEq, Eq)]
+ pub struct UDFHttpAllowList(pub Vec<HttpRequestMatcher>);
++#[cfg(not(feature = "python-udf"))]
++#[derive(Debug, Default, Clone, PartialEq, Eq)]
++pub struct UDFHttpAllowList(pub Vec<()>);
+ 
++#[cfg(feature = "python-udf")]
+ impl UDFHttpAllowList {
+     const ITEM_SEP: &str = "|";
+     const PART_SEP: &str = ":";
+ }
+ 
++#[cfg(not(feature = "python-udf"))]
++impl FromStr for UDFHttpAllowList {
++    type Err = ParseError;
++    fn from_str(s: &str) -> Result<Self, Self::Err> {
++        if s.is_empty() {
++            Ok(Self(vec![]))
++        } else {
++            Err(ParseError(
++                "Python/WASM UDF support is disabled in this build".to_owned(),
++            ))
++        }
++    }
++}
++#[cfg(feature = "python-udf")]
+ impl FromStr for UDFHttpAllowList {
+     type Err = ParseError;
+ 
+@@ -280,6 +302,14 @@ impl FromStr for UDFHttpAllowList {
+     }
+ }
+ 
++#[cfg(not(feature = "python-udf"))]
++impl std::fmt::Display for UDFHttpAllowList {
++    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
++        let _ = self;
++        write!(f, "")
++    }
++}
++#[cfg(feature = "python-udf")]
+ impl std::fmt::Display for UDFHttpAllowList {
+     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+         for (i, item) in self.0.iter().enumerate() {
+@@ -314,7 +344,7 @@ impl ConfigField for UDFHttpAllowList {
+     }
+ }
+ 
+-#[cfg(test)]
++#[cfg(all(test, feature = "python-udf"))]
+ mod tests {
+     use super::*;
+     use std::str::FromStr;
+diff --git a/core/iox_query/src/exec/context.rs b/core/iox_query/src/exec/context.rs
+index 8346c6c..2b82287 100644
+--- a/core/iox_query/src/exec/context.rs
++++ b/core/iox_query/src/exec/context.rs
+@@ -38,12 +38,16 @@ use datafusion::{
+     prelude::*,
+ };
+ use datafusion::{catalog::Session, config::TableOptions};
++#[cfg(feature = "python-udf")]
+ use datafusion_udf_wasm_host::{AllowCertainHttpRequests, WasmPermissions};
++#[cfg(feature = "python-udf")]
+ use datafusion_udf_wasm_query::ParsedQuery;
+ use datafusion_util::config::{
+     DEFAULT_CATALOG, iox_file_formats, iox_session_config, table_parquet_options,
+ };
+-use executor::{DedicatedExecutor, get_io_runtime};
++use executor::DedicatedExecutor;
++#[cfg(feature = "python-udf")]
++use executor::get_io_runtime;
+ use futures::TryStreamExt;
+ use query_functions::{
+     register_iox_scalar_functions, register_iox_window_functions,
+@@ -510,6 +514,14 @@ impl IOxSessionContext {
+             .unwrap_or_default();
+ 
+         let sql = if config_ext.udfs_enabled {
++            #[cfg(not(feature = "python-udf"))]
++            {
++                return Err(DataFusionError::Plan(
++                    "Python/WASM UDF support is disabled in this build".to_owned(),
++                 ));
++            }
++            #[cfg(feature = "python-udf")]
++            {
+             let mut http_permissions = AllowCertainHttpRequests::new();
+             config_ext
+                 .udfs_http_allow_list
+@@ -529,6 +541,7 @@ impl IOxSessionContext {
+             }
+ 
+             sql
++            }
+         } else {
+             sql.to_owned()
+         };
