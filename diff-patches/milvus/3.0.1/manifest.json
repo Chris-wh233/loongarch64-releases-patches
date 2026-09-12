@@ -1,0 +1,8 @@
+{
+  "project": "milvus",
+  "version": "3.0.1",
+  "generated_at": "2026-09-12T07:17:53Z",
+  "diff_files": [
+    "milvus_src.patch"
+  ]
+}

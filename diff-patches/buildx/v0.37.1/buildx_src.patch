@@ -1,0 +1,17 @@
+diff --git a/driver/bkimage/bkimage.go b/driver/bkimage/bkimage.go
+index 464adfb..69fc706 100644
+--- a/driver/bkimage/bkimage.go
++++ b/driver/bkimage/bkimage.go
+@@ -1,9 +1,9 @@
+ package bkimage
+ 
+ const (
+-	DefaultImage         = "moby/buildkit:buildx-stable-1"
+-	QemuImage            = "tonistiigi/binfmt:latest" // TODO: make this verified
+-	DefaultRootlessImage = DefaultImage + "-rootless"
++	DefaultImage = "lcr.loongnix.cn/library/buildkit:0.33.0"
++	QemuImage = "lcr.loongnix.cn/tonistiigi/binfmt:latest"
++	DefaultRootlessImage = "lcr.loongnix.cn/library/buildkit:0.33.0"
+ 
+ 	// TrustedRepo is the fully-qualified repository whose tags are verified
+ 	// against the builtin default policy before a builder is created from
