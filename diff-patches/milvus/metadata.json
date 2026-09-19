@@ -3,8 +3,8 @@
   "ci_repository": "loongarch64-releases/milvus",
   "upstream_repository": "milvus-io/milvus",
   "architecture": "loongarch64",
-  "latest_generated_version": "3.0.1",
-  "upstream_source_tag": "v3.0.1",
+  "latest_generated_version": "3.0.2",
+  "upstream_source_tag": "v3.0.2",
   "docker_image": "lcr.loongnix.cn/library/debian:forky",
   "dockerfile": "Dockerfile.base",
   "extra_packages": [
@@ -14,16 +14,16 @@
     "python3-venv",
     "pip:conan>2"
   ],
-  "last_generated_at": "2026-09-12T07:17:53Z",
-  "diff_directory": "diff-patches/milvus/3.0.1",
+  "last_generated_at": "2026-09-19T07:28:07Z",
+  "diff_directory": "diff-patches/milvus/3.0.2",
   "diff_files": [
     "milvus_src.patch"
   ],
   "description": "Captures Milvus source adaptations, Conan configuration changes, and downloaded Conan recipe adaptations as separate diffs.",
   "generated_manifest": {
     "project": "milvus",
-    "version": "3.0.1",
-    "generated_at": "2026-09-12T07:17:53Z",
+    "version": "3.0.2",
+    "generated_at": "2026-09-19T07:28:07Z",
     "diff_files": [
       "milvus_src.patch"
     ]
