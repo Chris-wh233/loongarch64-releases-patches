@@ -1,0 +1,8 @@
+{
+  "project": "elasticsearch",
+  "version": "9.5.5",
+  "generated_at": "2026-10-09T09:17:49Z",
+  "diff_files": [
+    "elasticsearch_src.patch"
+  ]
+}
