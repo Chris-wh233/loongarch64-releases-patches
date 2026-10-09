@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 import json
 import sys
 from datetime import datetime, timezone
@@ -16,16 +18,15 @@ def first_from(dockerfile: Path) -> str | None:
 
 
 def main() -> int:
-    if len(sys.argv) != 7:
-        print("usage: update_metadata.py <main-root> <ci-root> <project> <version> <source-tag> <diff-dir>", file=sys.stderr)
+    if len(sys.argv) != 6:
+        print("usage: update_metadata.py <main-root> <project> <version> <source-tag> <diff-dir>", file=sys.stderr)
         return 2
 
     main_root = Path(sys.argv[1]).resolve()
-    ci_root = Path(sys.argv[2]).resolve()
-    project_name = sys.argv[3]
-    version = sys.argv[4]
-    source_tag = sys.argv[5]
-    diff_dir = Path(sys.argv[6]).resolve()
+    project_name = sys.argv[2]
+    version = sys.argv[3]
+    source_tag = sys.argv[4]
+    diff_dir = Path(sys.argv[5]).resolve()
 
     data = json.loads((main_root / "projects.json").read_text(encoding="utf-8"))
     project = next(p for p in data["projects"] if p["name"] == project_name)

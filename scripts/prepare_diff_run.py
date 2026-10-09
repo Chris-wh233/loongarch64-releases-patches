@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 import json
+import os
+import re
 import shutil
 import stat
 import sys
 from pathlib import Path
 
 
-def load_project(config_path: Path, name: str) -> dict:
+def load_project(config_path: Path, name: str, version: str) -> dict:
     data = json.loads(config_path.read_text(encoding="utf-8"))
     for project in data["projects"]:
         if project["name"] == name:
             merged = dict(project)
-            merged["architecture"] = data["architecture"]
+            major_version = version.split(".", 1)[0]
+            overrides = project.get("major_version_overrides", {}).get(major_version, {})
+            merged.update(overrides)
             return merged
     raise SystemExit(f"unknown project: {name}")
 
@@ -61,37 +67,39 @@ def add_source_tag_default(lines: list[str], source_tag: str) -> list[str]:
 
 def diff_groups(project: dict) -> list[dict]:
     groups = []
-    if all(k in project for k in ("patch_baseline", "patch_anchor", "diff_dir", "diff_file")):
-        groups.append({
+    fields = ("patch_baseline", "patch_anchor", "diff_dir", "diff_file")
+    scope_fields = ("patch_baseline_file", "patch_anchor_file")
+    present = [field in project for field in fields]
+    if any(present) and not all(present):
+        missing = [field for field in fields if field not in project]
+        raise SystemExit(f"{project['name']} has incomplete default diff group: missing {', '.join(missing)}")
+    if all(present):
+        group = {
             "id": "default",
-            "patch_baseline": project["patch_baseline"],
-            "patch_anchor": project["patch_anchor"],
-            "diff_dir": project["diff_dir"],
-            "diff_file": project["diff_file"],
-        })
-
-    idx = 1
-    while True:
-        keys = {
-            "patch_baseline": f"patch_baseline_{idx}",
-            "patch_anchor": f"patch_anchor_{idx}",
-            "diff_dir": f"diff_dir_{idx}",
-            "diff_file": f"diff_file_{idx}",
+            **{field: project[field] for field in fields},
         }
-        present = [key in project for key in keys.values()]
-        if not any(present):
-            break
-        if not all(present):
-            missing = [name for name, key in keys.items() if key not in project]
+        group.update({field: project[field] for field in scope_fields if field in project})
+        groups.append(group)
+
+    indices = set()
+    for key in project:
+        match = re.fullmatch(r"(?:patch_baseline|patch_anchor|diff_dir|diff_file)_(\d+)", key)
+        if match:
+            indices.add(int(match.group(1)))
+    for idx in range(1, max(indices, default=0) + 1):
+        keys = {field: f"{field}_{idx}" for field in fields}
+        missing = [field for field, key in keys.items() if key not in project]
+        if missing:
             raise SystemExit(f"{project['name']} has incomplete diff group {idx}: missing {', '.join(missing)}")
-        groups.append({
+        group = {
             "id": str(idx),
-            "patch_baseline": project[keys["patch_baseline"]],
-            "patch_anchor": project[keys["patch_anchor"]],
-            "diff_dir": project[keys["diff_dir"]],
-            "diff_file": project[keys["diff_file"]],
-        })
-        idx += 1
+            **{field: project[key] for field, key in keys.items()},
+        }
+        for field in scope_fields:
+            key = f"{field}_{idx}"
+            if key in project:
+                group[field] = project[key]
+        groups.append(group)
 
     return groups
 
@@ -105,9 +113,12 @@ def shell_files(repo_root: Path) -> list[Path]:
     return [path for path in files if path.exists()]
 
 
-def find_anchor(files: dict[Path, list[str]], needle: str, label: str) -> tuple[Path, int]:
+def find_anchor(files: dict[Path, list[str]], needle: str, label: str, scope: Path | None = None) -> tuple[Path, int]:
     matches = []
-    for path, lines in files.items():
+    if scope is not None and scope not in files:
+        raise SystemExit(f"cannot find {label} script: {scope}")
+    candidates = ((scope, files[scope]),) if scope is not None else files.items()
+    for path, lines in candidates:
         for idx, line in enumerate(lines):
             if needle in line:
                 matches.append((path, idx))
@@ -118,6 +129,12 @@ def find_anchor(files: dict[Path, list[str]], needle: str, label: str) -> tuple[
 
 def add_insertion(insertions: dict[Path, dict[int, dict[str, list[str]]]], path: Path, idx: int, position: str, lines: list[str]) -> None:
     insertions.setdefault(path, {}).setdefault(idx, {"before": [], "after": []})[position].extend(lines)
+
+
+def diff_root_line(repo_root: Path, script: Path) -> str:
+    # The patched script may live under scripts/, patches/, or patches/conan2/.
+    relative_root = os.path.relpath(repo_root, script.parent).replace(os.sep, "/")
+    return f'_diff_root="$(cd "$(dirname "${{BASH_SOURCE[0]}}")/{relative_root}" && pwd)"\n'
 
 
 def patch_shell_files(repo_root: Path, project: dict, version: str, source_tag: str, output_dir: str) -> None:
@@ -135,8 +152,14 @@ def patch_shell_files(repo_root: Path, project: dict, version: str, source_tag: 
     build_capture_indexes = []
 
     for group in groups:
-        baseline_path, baseline_idx = find_anchor(files, group["patch_baseline"], f"{project['name']} baseline {group['id']}")
-        capture_path, capture_idx = find_anchor(files, group["patch_anchor"], f"{project['name']} capture {group['id']}")
+        baseline_scope = repo_root / group["patch_baseline_file"] if group.get("patch_baseline_file") else None
+        capture_scope = repo_root / group["patch_anchor_file"] if group.get("patch_anchor_file") else None
+        baseline_path, baseline_idx = find_anchor(
+            files, group["patch_baseline"], f"{project['name']} baseline {group['id']}", baseline_scope
+        )
+        capture_path, capture_idx = find_anchor(
+            files, group["patch_anchor"], f"{project['name']} capture {group['id']}", capture_scope
+        )
         label = f"{project['name']}-{group['id']}-{group['diff_file']}"
 
         add_insertion(
@@ -147,7 +170,7 @@ def patch_shell_files(repo_root: Path, project: dict, version: str, source_tag: 
             [
                 "\n",
                 f"# diff-generator: establish baseline for {group['diff_file']}\n",
-                '_diff_root="$(cd "$(dirname "$0")/.." && pwd)"\n',
+                diff_root_line(repo_root, baseline_path),
                 f'bash "${{_diff_root}}/scripts/diff_baseline.sh" "{group["diff_dir"]}" "{label}"\n',
             ],
         )
@@ -159,7 +182,7 @@ def patch_shell_files(repo_root: Path, project: dict, version: str, source_tag: 
             [
                 "\n",
                 f"# diff-generator: capture {group['diff_file']}\n",
-                '_diff_root="$(cd "$(dirname "$0")/.." && pwd)"\n',
+                diff_root_line(repo_root, capture_path),
                 f'bash "${{_diff_root}}/scripts/diff_capture.sh" "{group["diff_dir"]}" "{output_dir}" "{group["diff_file"]}" "{project["name"]}" "{version}"\n',
             ],
         )
@@ -206,7 +229,7 @@ def main() -> int:
     source_tag = sys.argv[5]
     output_dir = sys.argv[6]
 
-    project = load_project(main_root / "projects.json", project_name)
+    project = load_project(main_root / "projects.json", project_name, version)
     copy_helper_scripts(repo_root, main_root)
 
     patch_shell_files(repo_root, project, version, source_tag, output_dir)

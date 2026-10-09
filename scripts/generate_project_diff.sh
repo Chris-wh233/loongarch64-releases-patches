@@ -40,7 +40,7 @@ mkdir -p "$ci_cache" "$run_root" "${main_root}/diff-patches/${project}"
 cache_dir="${ci_cache}/${project}"
 
 if [ -d "${cache_dir}/.git" ]; then
-  git -C "$cache_dir" fetch --depth 1 origin main
+  git -C "$cache_dir" fetch --depth 1 origin HEAD
   git -C "$cache_dir" checkout -q FETCH_HEAD
 else
   git clone --depth 1 "https://github.com/${ci_repo}.git" "$cache_dir"
@@ -52,8 +52,6 @@ mkdir -p "$run_dir"
 cp -a "${cache_dir}/." "$run_dir/"
 
 output_dir="${main_root}/diff-patches/${project}/${version}"
-rm -rf "$output_dir"
-mkdir -p "$output_dir"
 container_output_dir="/src/diff-output"
 
 source_tag="$version"
@@ -77,16 +75,6 @@ python3 "${main_root}/scripts/render_diff_dockerfile.py" "$main_root" "$dockerfi
 image_name="$(cat "$image_name_file")"
 docker build -t "$image_name" -f "$generated_dockerfile" "${main_root}"
 
-mapfile -t extra_args < <(python3 - <<'PY' "$project_json" "$version"
-import json
-import sys
-
-project = json.loads(sys.argv[1])
-version = sys.argv[2]
-
-PY
-)
-
 docker run --rm \
   --platform linux/loong64 \
   -v "${run_dir}:/src:z" \
@@ -96,10 +84,23 @@ docker run --rm \
   -e HOST_UID="$(id -u)" \
   -e HOST_GID="$(id -g)" \
   "$image_name" \
-  /bin/bash -lc './scripts/build.sh "$@"' _ "$version" "${extra_args[@]}"
+  /bin/bash -lc './scripts/build.sh "$@"' _ "$version"
 
-if [ -d "${run_dir}/diff-output" ]; then
-  cp -a "${run_dir}/diff-output/." "$output_dir/"
-fi
+python3 - "$project_json" "${run_dir}/diff-output" <<'PY'
+import json
+import sys
+from pathlib import Path
 
-python3 "${main_root}/scripts/update_metadata.py" "$main_root" "$run_dir" "$project" "$version" "$source_tag" "$output_dir"
+project = json.loads(sys.argv[1])
+output_dir = Path(sys.argv[2])
+expected = project.get("required_diff_files", [])
+missing = [name for name in expected if not (output_dir / name).is_file() or not (output_dir / name).stat().st_size]
+if not (output_dir / "manifest.json").is_file() or missing:
+    raise SystemExit(f"incomplete diff output for {project['name']}: missing {', '.join(missing) or 'manifest.json'}")
+PY
+
+rm -rf "$output_dir"
+mkdir -p "$output_dir"
+cp -a "${run_dir}/diff-output/." "$output_dir/"
+
+python3 "${main_root}/scripts/update_metadata.py" "$main_root" "$project" "$version" "$source_tag" "$output_dir"

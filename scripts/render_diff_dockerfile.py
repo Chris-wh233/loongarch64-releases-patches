@@ -5,10 +5,6 @@ import sys
 from pathlib import Path
 
 
-def project_packages(project: dict) -> list[str]:
-    return list(project.get("extra_packages", []))
-
-
 def main() -> int:
     if len(sys.argv) != 5:
         print("usage: render_diff_dockerfile.py <main-root> <project|__all__> <output-dockerfile> <image-name-file>", file=sys.stderr)
@@ -30,7 +26,7 @@ def main() -> int:
 
     packages: list[str] = []
     for project in projects:
-        packages.extend(project_packages(project))
+        packages.extend(project.get("extra_packages", []))
 
     apt_packages = sorted({p for p in packages if not p.startswith("pip:")})
     pip_packages = sorted({p[4:] for p in packages if p.startswith("pip:")})

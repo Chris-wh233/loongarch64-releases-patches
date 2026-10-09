@@ -15,11 +15,12 @@ write_diff() {
   shift 2
 
   if [ ! -d "$repo_dir/.git" ]; then
-    return 0
+    echo "Missing Git baseline in $repo_dir" >&2
+    return 1
   fi
 
-  git -C "$repo_dir" add -N . >/dev/null 2>&1 || true
-  git -C "$repo_dir" diff --binary --no-ext-diff -- "$@" > "$out_file" || true
+  git -C "$repo_dir" add -N .
+  git -C "$repo_dir" diff --binary --no-ext-diff -- "$@" > "$out_file"
   if [ ! -s "$out_file" ]; then
     rm -f "$out_file"
   fi
