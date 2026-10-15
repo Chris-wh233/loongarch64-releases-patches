@@ -1,0 +1,8 @@
+{
+  "project": "kapacitor",
+  "version": "1.8.8",
+  "generated_at": "2026-10-15T07:41:46Z",
+  "diff_files": [
+    "kapacitor_src.patch"
+  ]
+}

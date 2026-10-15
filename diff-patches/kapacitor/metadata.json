@@ -3,21 +3,21 @@
   "ci_repository": "loongarch64-releases/kapacitor",
   "upstream_repository": "influxdata/kapacitor",
   "architecture": "loongarch64",
-  "latest_generated_version": "1.8.7",
-  "upstream_source_tag": "v1.8.7",
+  "latest_generated_version": "1.8.8",
+  "upstream_source_tag": "v1.8.8",
   "docker_image": "lcr.loongnix.cn/library/debian:forky",
   "dockerfile": "Dockerfile.base",
   "extra_packages": [],
-  "last_generated_at": "2026-09-19T07:30:07Z",
-  "diff_directory": "diff-patches/kapacitor/1.8.7",
+  "last_generated_at": "2026-10-15T07:41:56Z",
+  "diff_directory": "diff-patches/kapacitor/1.8.8",
   "diff_files": [
     "kapacitor_src.patch"
   ],
   "description": "Captures Kapacitor source adaptations applied before python3 build.py",
   "generated_manifest": {
     "project": "kapacitor",
-    "version": "1.8.7",
-    "generated_at": "2026-09-19T07:30:02Z",
+    "version": "1.8.8",
+    "generated_at": "2026-10-15T07:41:46Z",
     "diff_files": [
       "kapacitor_src.patch"
     ]
