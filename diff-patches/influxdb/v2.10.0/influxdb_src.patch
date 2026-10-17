@@ -1,0 +1,28 @@
+diff --git a/go.mod b/go.mod
+index e7020cd..5b8feac 100644
+--- a/go.mod
++++ b/go.mod
+@@ -63,7 +63,7 @@ require (
+ 	github.com/uber/jaeger-client-go v2.28.0+incompatible
+ 	github.com/xlab/treeprint v1.0.0
+ 	github.com/yudai/gojsondiff v1.0.0
+-	go.etcd.io/bbolt v1.3.10
++	go.etcd.io/bbolt v1.3.12
+ 	go.uber.org/multierr v1.11.0
+ 	go.uber.org/zap v1.27.0
+ 	golang.org/x/crypto v0.55.0
+diff --git a/go.sum b/go.sum
+index 1de6e47..140698a 100644
+--- a/go.sum
++++ b/go.sum
+@@ -800,8 +800,8 @@ github.com/zeebo/assert v1.3.0/go.mod h1:Pq9JiuJQpG8JLJdtkwrJESF0Foym2/D9XMU5ciN
+ github.com/zeebo/xxh3 v1.0.2 h1:xZmwmqxHZA8AI603jOQ0tMqmBr9lPeFwGg6d+xy9DC0=
+ github.com/zeebo/xxh3 v1.0.2/go.mod h1:5NWz9Sef7zIDm2JHfFlcQvNekmcEl9ekUZQQKCYaDcA=
+ go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
+-go.etcd.io/bbolt v1.3.10 h1:+BqfJTcCzTItrop8mq/lbzL8wSGtj94UO/3U31shqG0=
+-go.etcd.io/bbolt v1.3.10/go.mod h1:bK3UQLPJZly7IlNmV7uVHJDxfe5aK9Ll93e/74Y9oEQ=
++go.etcd.io/bbolt v1.3.12 h1:UAxZAIuJqzFwByP19gZC3zd5robK3FOangrGS+Fdczg=
++go.etcd.io/bbolt v1.3.12/go.mod h1:Gi2toLZr1jFkuReJm+yEPn7H8wk6ooptePtHYCbCS1g=
+ go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
+ go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=
+ go.opencensus.io v0.22.2/go.mod h1:yxeiOL68Rb0Xd1ddK5vPZ/oVn4vY4Ynel7k9FzqtOIw=
