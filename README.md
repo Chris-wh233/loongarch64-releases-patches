@@ -38,9 +38,9 @@
 ./scripts/generate_all_diffs.sh milvus 3.0.0
 ```
 
-批量入口 `generate_all_diffs.sh` 会跳过已有 `manifest.json` 且满足 `required_diff_files` 要求的版本；缺少必需文件时会重新生成。单项目入口 `generate_project_diff.sh` 总是重新生成。缺少必需文件会报错，并保留原有产物。有些项目在特定版本可能没有非空修改，因此只有确实必须产出的文件才应加入 `required_diff_files`。对于 Milvus 3.0.0、3.0.1、3.0.2 等旧版本，需要分别指定版本重新生成，才能补齐历史目录中的 Conan 补丁。
+批量入口 `generate_all_diffs.sh` 会跳过已有 `manifest.json` 且满足 `required_diff_files` 要求的版本；缺少必需文件时会重新生成。单项目入口 `generate_project_diff.sh` 总是重新生成。缺少必需文件会报错，并保留原有产物。有些项目在特定版本可能没有非空修改，因此只有确实必须产出的文件才应加入 `required_diff_files`。
 
-CI 工作流 [`.github/workflows/generate-diffs.yml`](.github/workflows/generate-diffs.yml) 每天运行一次，也支持手动输入 `project`，以及与 `project` 搭配的 `version`。工作流使用 QEMU/Buildx，并在产物变化时提交 `diff-patches/`。仓库需要启用 GitHub Actions，且工作流的 `GITHUB_TOKEN` 需要 `contents: write` 权限。当前工作流将该令牌传给 `gh`，无需额外密钥。
+CI 工作流 [`.github/workflows/generate-diffs.yml`](.github/workflows/generate-diffs.yml) 每天运行一次，也支持手动输入 `project`，以及与 `project` 搭配的 `version`。工作流使用 QEMU/Buildx，并在产物变化时提交 `diff-patches/`。
 
 ## 通过 `projects.json` 新增转换目标
 
